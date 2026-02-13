@@ -1,9 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import * as hbs from 'hbs';
+import { engine } from 'express-handlebars';
 import { AppModule } from './app.module';
-import { registerHbsHelpers } from './hbs.helpers';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -11,14 +10,22 @@ async function bootstrap() {
   const viewsDir = join(__dirname, '..', 'views');
 
   // Handlebars view engine with layout support
+  app.engine(
+    'hbs',
+    engine({
+      extname: '.hbs',
+      layoutsDir: join(viewsDir, 'layouts'),
+      defaultLayout: 'main',
+      partialsDir: join(viewsDir, 'partials'),
+      helpers: {
+        ifEq(a: unknown, b: unknown) {
+          return a === b;
+        },
+      },
+    }),
+  );
   app.setBaseViewsDir(viewsDir);
   app.setViewEngine('hbs');
-
-  // Register partials directory (layouts act as partials in hbs)
-  hbs.registerPartials(join(viewsDir, 'layouts'));
-
-  // Register custom helpers
-  registerHbsHelpers();
 
   // Static assets
   app.useStaticAssets(join(__dirname, '..', 'public'));
