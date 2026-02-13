@@ -1,0 +1,32 @@
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-900 mb-2">AI Tools Registry</h1>
+  <p class="text-gray-600">Search and share AI tools across the organization.</p>
+</div>
+
+<form method="GET" action="/" class="mb-8 flex gap-2">
+  <input
+    type="text"
+    name="q"
+    value="{{q}}"
+    placeholder="Search tools..."
+    class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+  <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+    Search
+  </button>
+</form>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {{#each items}}
+  <a href="/items/{{this.itemId}}" class="block bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow">
+    <div class="flex items-center gap-2 mb-2">
+      <span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">{{this.type}}</span>
+      <span class="text-xs text-gray-500">{{this.starCount}} stars</span>
+    </div>
+    <h3 class="font-semibold text-gray-900">{{this.name}}</h3>
+    <p class="text-sm text-gray-600 mt-1">{{this.description}}</p>
+  </a>
+  {{else}}
+  <p class="text-gray-500 col-span-full text-center py-12">No items found. Be the first to <a href="/items/new" class="text-blue-600 hover:underline">register a tool</a>!</p>
+  {{/each}}
+</div>

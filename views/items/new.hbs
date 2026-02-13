@@ -1,0 +1,47 @@
+<h1 class="text-2xl font-bold text-gray-900 mb-6">Register New Item</h1>
+
+<form action="/api/items" method="POST" class="max-w-2xl space-y-4">
+  <div>
+    <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+    <select id="type" name="type" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+      <option value="MCP">MCP</option>
+      <option value="Skill">Skill</option>
+      <option value="Plugin">Plugin</option>
+      <option value="Prompt">Prompt</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+    <input type="text" id="name" name="name" required
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+  </div>
+
+  <div>
+    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
+    <input type="text" id="description" name="description" required
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+  </div>
+
+  <div>
+    <label for="detailDescription" class="block text-sm font-medium text-gray-700 mb-1">Detail (Markdown)</label>
+    <textarea id="detailDescription" name="detailDescription" rows="8"
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+  </div>
+
+  <div>
+    <label for="installCommand" class="block text-sm font-medium text-gray-700 mb-1">Install Command (optional)</label>
+    <input type="text" id="installCommand" name="installCommand" placeholder="npx ..."
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+  </div>
+
+  <div>
+    <label for="githubUrl" class="block text-sm font-medium text-gray-700 mb-1">GitHub URL (optional)</label>
+    <input type="url" id="githubUrl" name="githubUrl"
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+  </div>
+
+  <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+    Register
+  </button>
+</form>
