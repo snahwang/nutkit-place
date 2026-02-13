@@ -3,11 +3,11 @@
   <p class="text-slate-400 mt-2">MVP에서는 기본 정보만 받아 등록합니다. (Auth/CSRF는 Phase 2)</p>
 </header>
 
-<form action="/api/items" method="POST" class="rounded-2xl bg-white/5 border border-white/10 p-6 shadow-card max-w-3xl">
+<form action="/api/items" method="POST" class="rounded-2xl bg-white/5 border border-white/10 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.45)] max-w-3xl">
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div>
       <label for="type" class="text-xs text-slate-400">type</label>
-      <select id="type" name="type" class="mt-1 w-full rounded-xl bg-ink-850/60 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent-600/60">
+      <select id="type" name="type" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60">
         <option value="MCP">MCP</option>
         <option value="Skill">Skill</option>
         <option value="Plugin">Plugin</option>
@@ -17,28 +17,28 @@
 
     <div>
       <label for="name" class="text-xs text-slate-400">name</label>
-      <input id="name" name="name" placeholder="e.g. payment-mcp" class="mt-1 w-full rounded-xl bg-ink-850/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-600/60" />
+      <input id="name" name="name" placeholder="e.g. payment-mcp" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
     </div>
 
     <div class="md:col-span-2">
       <label for="description" class="text-xs text-slate-400">description</label>
-      <input id="description" name="description" placeholder="한 줄 설명" class="mt-1 w-full rounded-xl bg-ink-850/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-600/60" />
+      <input id="description" name="description" placeholder="한 줄 설명" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
     </div>
 
     <div class="md:col-span-2">
       <label for="installCommand" class="text-xs text-slate-400">install command (optional)</label>
-      <input id="installCommand" name="installCommand" placeholder="npx ..." class="mt-1 w-full rounded-xl bg-ink-850/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-600/60" />
+      <input id="installCommand" name="installCommand" placeholder="npx ..." class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
       <p class="mt-2 text-xs text-slate-500">클릭 한 번에 복사되는 명령어로 사용될 예정.</p>
     </div>
 
     <div class="md:col-span-2">
       <label for="detailDescription" class="text-xs text-slate-400">detail (markdown)</label>
-      <textarea id="detailDescription" name="detailDescription" rows="6" placeholder="상세 설명(Markdown)" class="mt-1 w-full rounded-xl bg-ink-850/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-600/60"></textarea>
+      <textarea id="detailDescription" name="detailDescription" rows="6" placeholder="상세 설명(Markdown)" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60"></textarea>
     </div>
   </div>
 
   <div class="mt-6 flex items-center gap-3">
-    <button type="submit" class="px-5 py-2.5 rounded-xl bg-accent-600 text-black font-semibold hover:bg-accent-500">save</button>
+    <button type="submit" class="px-5 py-2.5 rounded-xl bg-orange-500 text-black font-semibold hover:bg-orange-400">save</button>
     <a href="/" class="text-sm text-slate-300 hover:text-white">cancel</a>
   </div>
 </form>
