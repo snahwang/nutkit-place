@@ -1,32 +1,93 @@
-<div class="mb-6">
-  <h1 class="text-2xl font-bold text-gray-900 mb-2">AI Tools Registry</h1>
-  <p class="text-gray-600">Search and share AI tools across the organization.</p>
-</div>
+<header class="mb-8">
+  <h1 class="text-3xl md:text-4xl font-bold tracking-tight">browse tools</h1>
+  <p class="text-slate-400 mt-2">사내 AI 자산(MCP, Skill, Plugin, Prompt)을 한 곳에서 검색하고 공유합니다.</p>
+</header>
 
-<form method="GET" action="/" class="mb-8 flex gap-2">
-  <input
-    type="text"
-    name="q"
-    value="{{q}}"
-    placeholder="Search tools..."
-    class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-  />
-  <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-    Search
-  </button>
-</form>
+<section class="mb-8">
+  <form method="GET" action="/" class="rounded-2xl bg-white/5 border border-white/10 p-4 md:p-5 shadow-card">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div class="md:col-span-2">
+        <label class="text-xs text-slate-400">search</label>
+        <input
+          type="text"
+          name="q"
+          value="{{q}}"
+          placeholder="예: claude mcp, logging, payment..."
+          class="mt-1 w-full rounded-xl bg-ink-850/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-600/60"
+        />
+      </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-  {{#each items}}
-  <a href="/items/{{this.itemId}}" class="block bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow">
-    <div class="flex items-center gap-2 mb-2">
-      <span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">{{this.type}}</span>
-      <span class="text-xs text-gray-500">{{this.starCount}} stars</span>
+      <div>
+        <label class="text-xs text-slate-400">type</label>
+        <select name="type" class="mt-1 w-full rounded-xl bg-ink-850/60 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent-600/60">
+          <option value="" {{#unless type}}selected{{/unless}}>all</option>
+          <option value="MCP" {{#ifEq type "MCP"}}selected{{/ifEq}}>MCP</option>
+          <option value="Skill" {{#ifEq type "Skill"}}selected{{/ifEq}}>Skill</option>
+          <option value="Plugin" {{#ifEq type "Plugin"}}selected{{/ifEq}}>Plugin</option>
+          <option value="Prompt" {{#ifEq type "Prompt"}}selected{{/ifEq}}>Prompt</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs text-slate-400">sort</label>
+        <select name="sort" class="mt-1 w-full rounded-xl bg-ink-850/60 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent-600/60">
+          <option value="latest" {{#ifEq sort "latest"}}selected{{/ifEq}}>latest</option>
+          <option value="stars" {{#ifEq sort "stars"}}selected{{/ifEq}}>stars</option>
+        </select>
+      </div>
     </div>
-    <h3 class="font-semibold text-gray-900">{{this.name}}</h3>
-    <p class="text-sm text-gray-600 mt-1">{{this.description}}</p>
-  </a>
-  {{else}}
-  <p class="text-gray-500 col-span-full text-center py-12">No items found. Be the first to <a href="/items/new" class="text-blue-600 hover:underline">register a tool</a>!</p>
-  {{/each}}
-</div>
+
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+      <span class="text-xs text-slate-500 mr-2">quick filters</span>
+      <button name="tag" value="dev" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-accent-600/50">dev</button>
+      <button name="tag" value="search" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-accent-600/50">search</button>
+      <button name="tag" value="devops" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-accent-600/50">devops</button>
+      <button name="tag" value="docs" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-accent-600/50">docs</button>
+      <div class="flex-1"></div>
+      <button type="submit" class="px-4 py-2 rounded-xl bg-accent-600 text-black font-semibold hover:bg-accent-500">apply</button>
+    </div>
+  </form>
+</section>
+
+<section>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    {{#each items}}
+      <a href="/items/{{this.itemId}}" class="group block rounded-2xl bg-white/5 border border-white/10 p-5 shadow-card hover:shadow-glow transition">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-semibold tracking-wide uppercase px-2 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300">{{this.type}}</span>
+              <span class="text-xs text-slate-500">★ {{this.starCount}}</span>
+            </div>
+            <h3 class="mt-3 text-lg font-semibold text-slate-100 group-hover:text-white truncate">{{this.name}}</h3>
+            <p class="mt-2 text-sm text-slate-400 line-clamp-3">{{this.description}}</p>
+          </div>
+
+          <div class="shrink-0 h-11 w-11 rounded-xl bg-ink-800 border border-white/10 flex items-center justify-center text-slate-300">
+            {{#if this.icon}}
+              <span class="text-xl">{{this.icon}}</span>
+            {{else}}
+              <span class="text-sm font-bold">Z</span>
+            {{/if}}
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-2">
+          {{#each this.tags}}
+            <span class="text-xs px-2 py-1 rounded-full bg-ink-800/60 border border-white/10 text-slate-300">{{this}}</span>
+          {{/each}}
+        </div>
+
+        <div class="mt-5 flex items-center justify-between">
+          <span class="text-xs text-slate-500">{{this.authorName}}</span>
+          <span class="text-sm font-semibold px-3 py-1.5 rounded-lg bg-accent-600 text-black group-hover:bg-accent-500">open</span>
+        </div>
+      </a>
+    {{else}}
+      <div class="col-span-full text-center py-16 rounded-2xl bg-white/5 border border-white/10">
+        <p class="text-slate-400">No items yet.</p>
+        <a href="/items/new" class="inline-block mt-4 px-4 py-2 rounded-xl bg-accent-600 text-black font-semibold hover:bg-accent-500">register first tool</a>
+      </div>
+    {{/each}}
+  </div>
+</section>
