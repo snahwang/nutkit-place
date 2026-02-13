@@ -1,5 +1,11 @@
 #!/bin/bash
 # scripts/init-dynamodb.sh
+# Initializes DynamoDB Local with table + seed data.
+# No real AWS credentials required — local dummy values suffice.
+
+export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-local}"
+export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-local}"
+export AWS_DEFAULT_REGION="ap-northeast-2"
 
 ENDPOINT="http://localhost:8000"
 TABLE="ZarketPlaces"
@@ -31,7 +37,7 @@ aws dynamodb create-table \
 
 echo "✓ Table '$TABLE' created"
 
-# 태그 Seed 데이터
+# ---------- 태그 Seed 데이터 ----------
 TAGS=(
   '{"PK":{"S":"TAG_GROUP#TYPE"},"SK":{"S":"TAG#mcp"},"tagId":{"S":"mcp"},"groupId":{"S":"TYPE"},"groupName":{"S":"타입"},"label":{"S":"MCP"},"order":{"N":"1"}}'
   '{"PK":{"S":"TAG_GROUP#TYPE"},"SK":{"S":"TAG#skill"},"tagId":{"S":"skill"},"groupId":{"S":"TYPE"},"groupName":{"S":"타입"},"label":{"S":"Skill"},"order":{"N":"2"}}'
@@ -65,3 +71,25 @@ for tag in "${TAGS[@]}"; do
 done
 
 echo "✓ Seed tags inserted (${#TAGS[@]} items)"
+
+# ---------- 아이템 Seed 데이터 ----------
+NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+ITEMS=(
+  '{"PK":{"S":"ITEM#demo-001"},"SK":{"S":"METADATA"},"itemId":{"S":"demo-001"},"type":{"S":"MCP"},"name":{"S":"payment-mcp"},"description":{"S":"결제/정산 도메인에서 자주 쓰는 조회·테스트 도구를 MCP로 묶어 1-Click으로 사용합니다."},"detailDescription":{"S":"# payment-mcp\n\n결제 MCP 서버 예제입니다."},"tags":{"L":[{"S":"payment"},{"S":"dev"},{"S":"mcp"},{"S":"api"}]},"status":{"S":"published"},"installCommand":{"S":"npx @zigbang/payment-mcp"},"authorId":{"S":"user-seed"},"authorName":{"S":"ZIGBANG"},"authorEmail":{"S":"dev@zigbang.com"},"starCount":{"N":"128"},"viewCount":{"N":"340"},"icon":{"S":"💳"},"createdAt":{"S":"2026-02-01T09:00:00Z"},"updatedAt":{"S":"2026-02-01T09:00:00Z"}}'
+  '{"PK":{"S":"ITEM#demo-002"},"SK":{"S":"METADATA"},"itemId":{"S":"demo-002"},"type":{"S":"Skill"},"name":{"S":"log-inspector"},"description":{"S":"에러 로그를 빠르게 요약하고, 원인 후보와 확인 체크리스트를 생성하는 스킬입니다."},"detailDescription":{"S":"# log-inspector\n\n로그 분석 스킬입니다."},"tags":{"L":[{"S":"devops"},{"S":"docs"},{"S":"search"}]},"status":{"S":"published"},"installCommand":{"S":"npx @zigbang/log-inspector"},"authorId":{"S":"user-seed"},"authorName":{"S":"Platform"},"authorEmail":{"S":"platform@zigbang.com"},"starCount":{"N":"64"},"viewCount":{"N":"210"},"icon":{"S":"🧯"},"createdAt":{"S":"2026-02-03T10:00:00Z"},"updatedAt":{"S":"2026-02-03T10:00:00Z"}}'
+  '{"PK":{"S":"ITEM#demo-003"},"SK":{"S":"METADATA"},"itemId":{"S":"demo-003"},"type":{"S":"Plugin"},"name":{"S":"telegram-alerts"},"description":{"S":"업무 리마인더/알림을 텔레그램으로 보내는 플러그인 템플릿."},"detailDescription":{"S":"# telegram-alerts\n\n텔레그램 알림 플러그인입니다."},"tags":{"L":[{"S":"deploy"},{"S":"devops"},{"S":"plugin"}]},"status":{"S":"published"},"authorId":{"S":"user-seed"},"authorName":{"S":"Tools"},"authorEmail":{"S":"tools@zigbang.com"},"starCount":{"N":"42"},"viewCount":{"N":"95"},"icon":{"S":"📣"},"createdAt":{"S":"2026-02-05T11:00:00Z"},"updatedAt":{"S":"2026-02-05T11:00:00Z"}}'
+  '{"PK":{"S":"ITEM#demo-004"},"SK":{"S":"METADATA"},"itemId":{"S":"demo-004"},"type":{"S":"Prompt"},"name":{"S":"scrum-daily"},"description":{"S":"어제/오늘/블로커를 30초 내로 말할 수 있게 정리해주는 스크럼 프롬프트."},"detailDescription":{"S":"# scrum-daily\n\n스크럼 정리 프롬프트입니다."},"tags":{"L":[{"S":"docs"},{"S":"po"},{"S":"prompt"}]},"status":{"S":"published"},"authorId":{"S":"user-seed"},"authorName":{"S":"Product"},"authorEmail":{"S":"product@zigbang.com"},"starCount":{"N":"91"},"viewCount":{"N":"500"},"icon":{"S":"📝"},"createdAt":{"S":"2026-02-07T14:00:00Z"},"updatedAt":{"S":"2026-02-07T14:00:00Z"}}'
+  '{"PK":{"S":"ITEM#demo-005"},"SK":{"S":"METADATA"},"itemId":{"S":"demo-005"},"type":{"S":"MCP"},"name":{"S":"notion-mcp"},"description":{"S":"노션 페이지/DB를 생성·업데이트하는 MCP 서버 예제."},"detailDescription":{"S":"# notion-mcp\n\n노션 연동 MCP 서버입니다."},"tags":{"L":[{"S":"docs"},{"S":"api"},{"S":"mcp"}]},"status":{"S":"published"},"authorId":{"S":"user-seed"},"authorName":{"S":"Internal"},"authorEmail":{"S":"internal@zigbang.com"},"starCount":{"N":"77"},"viewCount":{"N":"180"},"icon":{"S":"📚"},"createdAt":{"S":"2026-02-09T08:00:00Z"},"updatedAt":{"S":"2026-02-09T08:00:00Z"}}'
+  '{"PK":{"S":"ITEM#demo-006"},"SK":{"S":"METADATA"},"itemId":{"S":"demo-006"},"type":{"S":"Skill"},"name":{"S":"security-healthcheck"},"description":{"S":"서버 상태, 권한 설정, 노출 위험을 점검하고 개선 액션을 제안합니다."},"detailDescription":{"S":"# security-healthcheck\n\n보안 점검 스킬입니다."},"tags":{"L":[{"S":"devops"},{"S":"auth"},{"S":"security"}]},"status":{"S":"published"},"authorId":{"S":"user-seed"},"authorName":{"S":"Ops"},"authorEmail":{"S":"ops@zigbang.com"},"starCount":{"N":"33"},"viewCount":{"N":"120"},"icon":{"S":"🛡️"},"createdAt":{"S":"2026-02-11T16:00:00Z"},"updatedAt":{"S":"2026-02-11T16:00:00Z"}}'
+)
+
+for item in "${ITEMS[@]}"; do
+  aws dynamodb put-item \
+    --endpoint-url $ENDPOINT \
+    --table-name $TABLE \
+    --item "$item" \
+    --region ap-northeast-2
+done
+
+echo "✓ Seed items inserted (${#ITEMS[@]} items)"

@@ -4,7 +4,7 @@
   "description": "Zarket Places - AI Tools Registry (NestJS SSR Monolith)",
   "private": true,
   "scripts": {
-    "build:css": "tailwindcss -i ./src/styles/tailwind.css -o ./public/css/tailwind.css",
+    "build:css": "tailwindcss -i ./src/styles/tailwind.css -o ./public/css/tailwind.css --config ./tailwind.config.mjs",
     "build": "npm run build:css && nest build",
     "start": "nest start",
     "start:dev": "npm run build:css && nest start --watch",
