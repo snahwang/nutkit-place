@@ -45,13 +45,21 @@ async function bootstrap() {
   // Static assets
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
+  // Trust first proxy (ngrok, ALB, etc.) so req.secure works behind HTTPS
+  app.set('trust proxy', 1);
+
   // Session
   app.use(
     session({
       secret: process.env.SESSION_SECRET || 'local-dev-secret',
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours
+      proxy: true,
+      cookie: {
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        sameSite: 'lax',
+        secure: 'auto', // true when behind HTTPS proxy
+      },
     }),
   );
 

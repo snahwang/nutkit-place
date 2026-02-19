@@ -12,8 +12,12 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  googleAuthCallback(@Req() _req: Request, @Res() res: Response) {
-    res.redirect('/');
+  googleAuthCallback(@Req() req: Request, @Res() res: Response) {
+    if (req.session) {
+      req.session.save(() => res.redirect('/'));
+    } else {
+      res.redirect('/');
+    }
   }
 
   @Get('logout')
@@ -21,5 +25,13 @@ export class AuthController {
     req.logout(() => {
       res.redirect('/');
     });
+  }
+
+  @Get('whoami')
+  whoami(@Req() req: Request) {
+    return {
+      authenticated: req.isAuthenticated(),
+      user: req.user || null,
+    };
   }
 }
