@@ -32,6 +32,10 @@ async function bootstrap() {
           if (!Array.isArray(arr)) return '';
           return arr.join(sep);
         },
+        hasTag: function (tags: unknown, tag: unknown) {
+          if (!Array.isArray(tags)) return false;
+          return tags.includes(tag);
+        },
       },
     }),
   );

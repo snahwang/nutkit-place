@@ -44,10 +44,10 @@
     </div>
     <div class="mt-4 flex flex-wrap items-center gap-2">
       <span class="text-xs text-slate-500 mr-2">quick filters</span>
-      <button type="button" data-tag="dev" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">dev</button>
-      <button type="button" data-tag="search" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">search</button>
-      <button type="button" data-tag="devops" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">devops</button>
-      <button type="button" data-tag="docs" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">docs</button>
+      <button type="button" data-tag="dev" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50 {{#if (hasTag tags "dev")}}border-orange-500 text-white bg-orange-500/10{{/if}}">dev</button>
+      <button type="button" data-tag="search" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50 {{#if (hasTag tags "search")}}border-orange-500 text-white bg-orange-500/10{{/if}}">search</button>
+      <button type="button" data-tag="devops" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50 {{#if (hasTag tags "devops")}}border-orange-500 text-white bg-orange-500/10{{/if}}">devops</button>
+      <button type="button" data-tag="docs" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50 {{#if (hasTag tags "docs")}}border-orange-500 text-white bg-orange-500/10{{/if}}">docs</button>
       <button type="button" id="clear-tags" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300 hover:border-white/20">clear</button>
       <div class="flex-1"></div>
       <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-black font-semibold hover:bg-orange-400">apply</button>
