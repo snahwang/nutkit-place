@@ -49,7 +49,11 @@ export class AuthController {
   sessionTest(@Req() req: Request) {
     const session: any = (req as any).session;
     if (!session) {
-      return { ok: false, reason: 'no session middleware', sessionID: (req as any).sessionID };
+      return {
+        ok: false,
+        reason: 'no session middleware',
+        sessionID: (req as any).sessionID,
+      };
     }
     session.counter = (session.counter || 0) + 1;
     return {
@@ -61,5 +65,28 @@ export class AuthController {
       xForwardedProto: req.headers['x-forwarded-proto'] || null,
       cookieHeaderPresent: Boolean(req.headers.cookie),
     };
+  }
+
+  /**
+   * Dev-only: bypass Google OAuth to verify that passport+session works end-to-end.
+   * If this works but Google does not, the issue is in OAuth callback handling.
+   */
+  @Get('dev-login')
+  devLogin(@Req() req: Request, @Res() res: Response) {
+    if (process.env.NODE_ENV !== 'development') {
+      return res.status(404).send('Not found');
+    }
+    const user: any = {
+      id: 'dev-user',
+      email: 'dev@local',
+      name: 'Dev User',
+    };
+    (req as any).logIn(user, (err: any) => {
+      if (err) return res.status(500).send(String(err));
+      if (req.session) {
+        return req.session.save(() => res.redirect('/'));
+      }
+      return res.redirect('/');
+    });
   }
 }
