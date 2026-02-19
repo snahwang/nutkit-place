@@ -44,39 +44,48 @@
     </div>
     <div class="mt-4 flex flex-wrap items-center gap-2">
       <span class="text-xs text-slate-500 mr-2">quick filters</span>
-      <button type="button" data-tag="dev" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50 {{#if (hasTag tags "dev")}}border-orange-500 text-white bg-orange-500/10{{/if}}">dev</button>
-      <button type="button" data-tag="search" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50 {{#if (hasTag tags "search")}}border-orange-500 text-white bg-orange-500/10{{/if}}">search</button>
-      <button type="button" data-tag="devops" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50 {{#if (hasTag tags "devops")}}border-orange-500 text-white bg-orange-500/10{{/if}}">devops</button>
-      <button type="button" data-tag="docs" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50 {{#if (hasTag tags "docs")}}border-orange-500 text-white bg-orange-500/10{{/if}}">docs</button>
-      <button type="button" id="clear-tags" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300 hover:border-white/20">clear</button>
+      {{#if (hasTag tags "dev")}}
+      <button type="button" data-tag="dev" class="tag-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-500 text-black border border-orange-400">dev</button>
+      {{else}}
+      <button type="button" data-tag="dev" class="tag-chip px-3 py-1.5 rounded-full text-xs bg-white/5 border border-white/10 text-slate-200 hover:border-orange-500/50">dev</button>
+      {{/if}}
+      {{#if (hasTag tags "search")}}
+      <button type="button" data-tag="search" class="tag-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-500 text-black border border-orange-400">search</button>
+      {{else}}
+      <button type="button" data-tag="search" class="tag-chip px-3 py-1.5 rounded-full text-xs bg-white/5 border border-white/10 text-slate-200 hover:border-orange-500/50">search</button>
+      {{/if}}
+      {{#if (hasTag tags "devops")}}
+      <button type="button" data-tag="devops" class="tag-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-500 text-black border border-orange-400">devops</button>
+      {{else}}
+      <button type="button" data-tag="devops" class="tag-chip px-3 py-1.5 rounded-full text-xs bg-white/5 border border-white/10 text-slate-200 hover:border-orange-500/50">devops</button>
+      {{/if}}
+      {{#if (hasTag tags "docs")}}
+      <button type="button" data-tag="docs" class="tag-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-500 text-black border border-orange-400">docs</button>
+      {{else}}
+      <button type="button" data-tag="docs" class="tag-chip px-3 py-1.5 rounded-full text-xs bg-white/5 border border-white/10 text-slate-200 hover:border-orange-500/50">docs</button>
+      {{/if}}
       <div class="flex-1"></div>
+      {{#if tags.length}}
+      <button type="button" id="clear-tags" class="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-slate-400 hover:text-slate-200 hover:border-white/20">clear tags</button>
+      {{/if}}
       <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-black font-semibold hover:bg-orange-400">apply</button>
     </div>
     <script>
     (function() {
+      var form = document.querySelector('form');
+      var wrap = document.getElementById('tag-hidden');
+
       function getSelected() {
-        return Array.from(document.querySelectorAll('#tag-hidden input[name="tag"]')).map(function(i){ return i.value; });
+        return Array.from(wrap.querySelectorAll('input[name="tag"]')).map(function(i){ return i.value; });
       }
-      function setSelected(values) {
-        var wrap = document.getElementById('tag-hidden');
+      function setAndSubmit(values) {
         wrap.innerHTML = '';
         values.forEach(function(v){
           var input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = 'tag';
-          input.value = v;
+          input.type = 'hidden'; input.name = 'tag'; input.value = v;
           wrap.appendChild(input);
         });
-      }
-      function renderActive() {
-        var selected = new Set(getSelected());
-        document.querySelectorAll('.tag-chip').forEach(function(btn){
-          if (selected.has(btn.dataset.tag)) {
-            btn.classList.add('border-orange-500', 'text-white');
-          } else {
-            btn.classList.remove('border-orange-500', 'text-white');
-          }
-        });
+        form.submit();
       }
 
       document.querySelectorAll('.tag-chip').forEach(function(btn) {
@@ -84,20 +93,12 @@
           var selected = new Set(getSelected());
           if (selected.has(btn.dataset.tag)) selected.delete(btn.dataset.tag);
           else selected.add(btn.dataset.tag);
-          setSelected(Array.from(selected));
-          renderActive();
+          setAndSubmit(Array.from(selected));
         });
       });
 
       var clearBtn = document.getElementById('clear-tags');
-      if (clearBtn) {
-        clearBtn.addEventListener('click', function(){
-          setSelected([]);
-          renderActive();
-        });
-      }
-
-      renderActive();
+      if (clearBtn) clearBtn.addEventListener('click', function(){ setAndSubmit([]); });
     })();
     </script>
   </form>
