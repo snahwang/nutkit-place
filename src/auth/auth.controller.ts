@@ -32,6 +32,34 @@ export class AuthController {
     return {
       authenticated: req.isAuthenticated(),
       user: req.user || null,
+      // Extra session/proxy diagnostics (safe; no secrets)
+      sessionID: (req as any).sessionID,
+      hasSession: Boolean((req as any).session),
+      secure: (req as any).secure,
+      protocol: (req as any).protocol,
+      xForwardedProto: req.headers['x-forwarded-proto'] || null,
+      cookieHeaderPresent: Boolean(req.headers.cookie),
+    };
+  }
+
+  /**
+   * Session cookie diagnostic (no auth). Use this to confirm cookies persist behind ngrok/basic-auth.
+   */
+  @Get('session-test')
+  sessionTest(@Req() req: Request) {
+    const session: any = (req as any).session;
+    if (!session) {
+      return { ok: false, reason: 'no session middleware', sessionID: (req as any).sessionID };
+    }
+    session.counter = (session.counter || 0) + 1;
+    return {
+      ok: true,
+      counter: session.counter,
+      sessionID: (req as any).sessionID,
+      secure: (req as any).secure,
+      protocol: (req as any).protocol,
+      xForwardedProto: req.headers['x-forwarded-proto'] || null,
+      cookieHeaderPresent: Boolean(req.headers.cookie),
     };
   }
 }
