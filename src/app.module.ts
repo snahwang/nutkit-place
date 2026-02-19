@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { DynamoDbModule } from './dynamodb/dynamodb.module';
 import { HealthModule } from './health/health.module';
 import { ItemsModule } from './items/items.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { ItemsModule } from './items/items.module';
     DynamoDbModule,
     HealthModule,
     ItemsModule,
+    AuthModule,
   ],
   controllers: [AppController],
 })
