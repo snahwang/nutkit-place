@@ -27,7 +27,8 @@ const mockItemsService = {
   createItem: jest.fn(),
   updateItem: jest.fn(),
   deleteItem: jest.fn(),
-  incrementViewCount: jest.fn().mockResolvedValue(undefined),
+  hasUserStarred: jest.fn(),
+  toggleStar: jest.fn(),
   listPublishedItems: jest.fn(),
 };
 
@@ -55,35 +56,51 @@ describe('ItemsController', () => {
   describe('GET /items/:id', () => {
     it('should render detail for existing item', async () => {
       mockItemsService.getItemById.mockResolvedValue(mockItem);
-      const res = { render: jest.fn(), status: jest.fn().mockReturnThis() } as any;
+      mockItemsService.hasUserStarred.mockResolvedValue(false);
+      const req = {
+        user: { id: 'u1', email: 'test@test.com', name: 'Tester' },
+      } as any;
+      const res = {
+        render: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+      } as any;
 
-      await controller.getDetail('test-001', res);
+      await controller.getDetail('test-001', req, res);
 
       expect(mockItemsService.getItemById).toHaveBeenCalledWith('test-001');
-      expect(mockItemsService.incrementViewCount).toHaveBeenCalledWith('test-001');
       expect(res.render).toHaveBeenCalledWith('items/detail', {
         title: 'test-mcp',
         item: mockItem,
         hasInstallActions: { command: 'claude mcp add test' },
+        starred: false,
+        canEdit: true,
       });
     });
 
     it('should return 404 for missing item', async () => {
       mockItemsService.getItemById.mockResolvedValue(null);
-      const res = { render: jest.fn(), status: jest.fn().mockReturnThis() } as any;
+      const req = { user: null } as any;
+      const res = {
+        render: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+      } as any;
 
-      await controller.getDetail('missing', res);
+      await controller.getDetail('missing', req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.render).toHaveBeenCalledWith('error', expect.objectContaining({
-        statusCode: 404,
-      }));
+      expect(res.render).toHaveBeenCalledWith(
+        'error',
+        expect.objectContaining({ statusCode: 404 }),
+      );
     });
   });
 
   describe('POST /api/items', () => {
     it('should create item and redirect', async () => {
-      mockItemsService.createItem.mockResolvedValue({ ...mockItem, itemId: 'new-id' });
+      mockItemsService.createItem.mockResolvedValue({
+        ...mockItem,
+        itemId: 'new-id',
+      });
       const body = {
         type: 'MCP',
         name: 'new-mcp',
@@ -91,7 +108,9 @@ describe('ItemsController', () => {
         tags: 'dev, api',
         claude_code_command: 'claude mcp add new',
       };
-      const req = { user: { id: 'u1', name: 'Tester', email: 'test@test.com' } } as any;
+      const req = {
+        user: { id: 'u1', name: 'Tester', email: 'test@test.com' },
+      } as any;
       const res = { redirect: jest.fn() } as any;
 
       await controller.createItem(body, undefined, req, res);
@@ -108,8 +127,13 @@ describe('ItemsController', () => {
     });
 
     it('should use uploaded file for detailDescription', async () => {
-      mockItemsService.createItem.mockResolvedValue({ ...mockItem, itemId: 'new-id' });
-      const file = { buffer: Buffer.from('# From file') } as Express.Multer.File;
+      mockItemsService.createItem.mockResolvedValue({
+        ...mockItem,
+        itemId: 'new-id',
+      });
+      const file = {
+        buffer: Buffer.from('# From file'),
+      } as Express.Multer.File;
       const body = { type: 'MCP', name: 'x', description: 'y', tags: '' };
       const req = { user: null } as any;
       const res = { redirect: jest.fn() } as any;
@@ -124,13 +148,58 @@ describe('ItemsController', () => {
 
   describe('POST /api/items/:id/delete', () => {
     it('should delete item and redirect to home', async () => {
+      mockItemsService.getItemById.mockResolvedValue(mockItem);
       mockItemsService.deleteItem.mockResolvedValue(undefined);
-      const res = { redirect: jest.fn() } as any;
+      const req = {
+        user: { id: 'u1', email: 'test@test.com', name: 'Tester' },
+      } as any;
+      const res = {
+        redirect: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        render: jest.fn(),
+      } as any;
 
-      await controller.deleteItem('test-001', res);
+      await controller.deleteItem('test-001', req, res);
 
       expect(mockItemsService.deleteItem).toHaveBeenCalledWith('test-001');
       expect(res.redirect).toHaveBeenCalledWith('/');
+    });
+
+    it('should return 403 when user is not the author', async () => {
+      mockItemsService.getItemById.mockResolvedValue(mockItem);
+      const req = {
+        user: { id: 'other', email: 'other@test.com', name: 'Other' },
+      } as any;
+      const res = {
+        redirect: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        render: jest.fn(),
+      } as any;
+
+      await controller.deleteItem('test-001', req, res);
+
+      expect(mockItemsService.deleteItem).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('POST /api/items/:id/star', () => {
+    it('should toggle star and return result', async () => {
+      mockItemsService.toggleStar.mockResolvedValue({
+        starred: true,
+        starCount: 6,
+      });
+      const req = {
+        user: { id: 'u1', email: 'test@test.com', name: 'Tester' },
+      } as any;
+
+      const result = await controller.toggleStar('test-001', req);
+
+      expect(mockItemsService.toggleStar).toHaveBeenCalledWith(
+        'u1',
+        'test-001',
+      );
+      expect(result).toEqual({ starred: true, starCount: 6 });
     });
   });
 });

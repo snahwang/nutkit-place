@@ -6,6 +6,7 @@ describe('AppController', () => {
   let controller: AppController;
 
   const mockItemsService = {
+    getUserStarredItemIds: jest.fn().mockResolvedValue([]),
     listPublishedItems: jest.fn().mockResolvedValue([
       {
         itemId: 'test-001',

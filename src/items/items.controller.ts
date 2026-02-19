@@ -13,14 +13,25 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
-import { ItemsService, InstallActions } from './items.service';
-import { LoginGuard } from '../auth/authenticated.guard';
+import { ItemsService, InstallActions, ItemRecord } from './items.service';
+import { LoginGuard, ApiAuthGuard } from '../auth/authenticated.guard';
+
+const ADMIN_EMAIL = 'sonar@zigbang.com';
 
 @Controller()
 export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}
 
   /* ── helpers ──────────────────────────────────────── */
+
+  private canUserEdit(
+    user: Express.User | undefined,
+    item: ItemRecord,
+  ): boolean {
+    if (!user) return false;
+    if (user.email === ADMIN_EMAIL) return true;
+    return user.email === item.authorEmail;
+  }
 
   private parseInstallActions(body: Record<string, any>): InstallActions {
     const actions: InstallActions = {};
@@ -73,28 +84,63 @@ export class ItemsController {
   }
 
   @Get('items/:id')
-  async getDetail(@Param('id') id: string, @Res() res: Response) {
+  async getDetail(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     const item = await this.itemsService.getItemById(id);
     if (!item) {
       return res
         .status(404)
-        .render('error', { statusCode: 404, message: 'Item not found', title: 'Not Found' });
+        .render('error', {
+          statusCode: 404,
+          message: 'Item not found',
+          title: 'Not Found',
+        });
     }
-    this.itemsService.incrementViewCount(id);
+    const user = req.user as Express.User | undefined;
+    const starred = user
+      ? await this.itemsService.hasUserStarred(user.id, id)
+      : false;
     const hasInstallActions =
       item.installActions &&
       (item.installActions.claude_code || item.installActions.cursor);
-    return res.render('items/detail', { title: item.name, item, hasInstallActions });
+    const canEdit = this.canUserEdit(user, item);
+    return res.render('items/detail', {
+      title: item.name,
+      item,
+      hasInstallActions,
+      starred,
+      canEdit,
+    });
   }
 
   @Get('items/:id/edit')
   @UseGuards(LoginGuard)
-  async getEditForm(@Param('id') id: string, @Res() res: Response) {
+  async getEditForm(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     const item = await this.itemsService.getItemById(id);
     if (!item) {
       return res
         .status(404)
-        .render('error', { statusCode: 404, message: 'Item not found', title: 'Not Found' });
+        .render('error', {
+          statusCode: 404,
+          message: 'Item not found',
+          title: 'Not Found',
+        });
+    }
+    if (!this.canUserEdit(req.user as Express.User | undefined, item)) {
+      return res
+        .status(403)
+        .render('error', {
+          statusCode: 403,
+          message: 'Permission denied',
+          title: 'Forbidden',
+        });
     }
     return res.render('items/edit', { title: `Edit ${item.name}`, item });
   }
@@ -140,8 +186,29 @@ export class ItemsController {
     @Param('id') id: string,
     @Body() body: Record<string, any>,
     @UploadedFile() file: Express.Multer.File | undefined,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
+    const existing = await this.itemsService.getItemById(id);
+    if (!existing) {
+      return res
+        .status(404)
+        .render('error', {
+          statusCode: 404,
+          message: 'Item not found',
+          title: 'Not Found',
+        });
+    }
+    if (!this.canUserEdit(req.user as Express.User | undefined, existing)) {
+      return res
+        .status(403)
+        .render('error', {
+          statusCode: 403,
+          message: 'Permission denied',
+          title: 'Forbidden',
+        });
+    }
+
     let detailDescription: string | undefined = body.detailDescription;
     if (file) {
       detailDescription = file.buffer.toString('utf-8');
@@ -161,15 +228,49 @@ export class ItemsController {
     if (!item) {
       return res
         .status(404)
-        .render('error', { statusCode: 404, message: 'Item not found', title: 'Not Found' });
+        .render('error', {
+          statusCode: 404,
+          message: 'Item not found',
+          title: 'Not Found',
+        });
     }
     res.redirect(`/items/${item.itemId}`);
   }
 
   @Post('api/items/:id/delete')
   @UseGuards(LoginGuard)
-  async deleteItem(@Param('id') id: string, @Res() res: Response) {
+  async deleteItem(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const item = await this.itemsService.getItemById(id);
+    if (!item) {
+      return res
+        .status(404)
+        .render('error', {
+          statusCode: 404,
+          message: 'Item not found',
+          title: 'Not Found',
+        });
+    }
+    if (!this.canUserEdit(req.user as Express.User | undefined, item)) {
+      return res
+        .status(403)
+        .render('error', {
+          statusCode: 403,
+          message: 'Permission denied',
+          title: 'Forbidden',
+        });
+    }
     await this.itemsService.deleteItem(id);
     res.redirect('/');
+  }
+
+  @Post('api/items/:id/star')
+  @UseGuards(ApiAuthGuard)
+  async toggleStar(@Param('id') id: string, @Req() req: Request) {
+    const user = req.user as Express.User;
+    return this.itemsService.toggleStar(user.id, id);
   }
 }

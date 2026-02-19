@@ -24,14 +24,26 @@ export class AppController {
       sort,
     });
 
+    const user = (req as any).user;
+    let starredIds = new Set<string>();
+    if (user) {
+      const ids = await this.itemsService.getUserStarredItemIds(user.id);
+      starredIds = new Set(ids);
+    }
+
+    const itemsWithStarred = items.map((item: any) => ({
+      ...item,
+      starred: starredIds.has(item.itemId),
+    }));
+
     return {
       title: 'Zarket Places',
-      user: (req as any).user || null,
+      user: user || null,
       q: q || '',
-      tags, // array for multi-select
+      tags,
       type: type || '',
       sort: sort || 'latest',
-      items,
+      items: itemsWithStarred,
     };
   }
 }
