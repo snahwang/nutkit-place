@@ -37,28 +37,67 @@
       </div>
     </div>
 
-    <input type="hidden" name="tag" id="tag-input" value="{{tag}}" />
+    <div id="tag-hidden">
+      {{#each tags}}
+        <input type="hidden" name="tag" value="{{this}}" />
+      {{/each}}
+    </div>
     <div class="mt-4 flex flex-wrap items-center gap-2">
       <span class="text-xs text-slate-500 mr-2">quick filters</span>
       <button type="button" data-tag="dev" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">dev</button>
       <button type="button" data-tag="search" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">search</button>
       <button type="button" data-tag="devops" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">devops</button>
       <button type="button" data-tag="docs" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">docs</button>
+      <button type="button" id="clear-tags" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300 hover:border-white/20">clear</button>
       <div class="flex-1"></div>
       <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-black font-semibold hover:bg-orange-400">apply</button>
     </div>
     <script>
-    document.querySelectorAll('.tag-chip').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var input = document.getElementById('tag-input');
-        input.value = input.value === btn.dataset.tag ? '' : btn.dataset.tag;
-        document.querySelectorAll('.tag-chip').forEach(function(b) { b.classList.remove('border-orange-500', 'text-white'); });
-        if (input.value) btn.classList.add('border-orange-500', 'text-white');
-      });
-    });
     (function() {
-      var v = document.getElementById('tag-input').value;
-      if (v) document.querySelectorAll('.tag-chip').forEach(function(b) { if (b.dataset.tag === v) b.classList.add('border-orange-500', 'text-white'); });
+      function getSelected() {
+        return Array.from(document.querySelectorAll('#tag-hidden input[name="tag"]')).map(function(i){ return i.value; });
+      }
+      function setSelected(values) {
+        var wrap = document.getElementById('tag-hidden');
+        wrap.innerHTML = '';
+        values.forEach(function(v){
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'tag';
+          input.value = v;
+          wrap.appendChild(input);
+        });
+      }
+      function renderActive() {
+        var selected = new Set(getSelected());
+        document.querySelectorAll('.tag-chip').forEach(function(btn){
+          if (selected.has(btn.dataset.tag)) {
+            btn.classList.add('border-orange-500', 'text-white');
+          } else {
+            btn.classList.remove('border-orange-500', 'text-white');
+          }
+        });
+      }
+
+      document.querySelectorAll('.tag-chip').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var selected = new Set(getSelected());
+          if (selected.has(btn.dataset.tag)) selected.delete(btn.dataset.tag);
+          else selected.add(btn.dataset.tag);
+          setSelected(Array.from(selected));
+          renderActive();
+        });
+      });
+
+      var clearBtn = document.getElementById('clear-tags');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function(){
+          setSelected([]);
+          renderActive();
+        });
+      }
+
+      renderActive();
     })();
     </script>
   </form>

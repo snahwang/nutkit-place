@@ -44,7 +44,7 @@ export interface ItemRecord {
 
 export interface ListItemsQuery {
   q?: string;
-  tag?: string;
+  tag?: string | string[];
   type?: string;
   sort?: string;
 }
@@ -113,8 +113,18 @@ export class ItemsService {
     if (query.type) {
       items = items.filter((i) => i.type === query.type);
     }
-    if (query.tag) {
-      items = items.filter((i) => i.tags.includes(query.tag!));
+    const tags = Array.isArray(query.tag)
+      ? query.tag
+      : query.tag
+        ? [query.tag]
+        : [];
+    const tagFilters = tags
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+
+    if (tagFilters.length > 0) {
+      // Multi-select: OR semantics (match any selected tag)
+      items = items.filter((i) => tagFilters.some((t) => i.tags.includes(t)));
     }
     if (query.q) {
       const lower = query.q.trim().replace(/\s+/g, ' ').toLowerCase();

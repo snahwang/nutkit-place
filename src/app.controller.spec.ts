@@ -39,7 +39,7 @@ describe('AppController', () => {
     expect(result.items[0].name).toBe('test-mcp');
     expect(mockItemsService.listPublishedItems).toHaveBeenCalledWith({
       q: undefined,
-      tag: undefined,
+      tag: [],
       type: undefined,
       sort: undefined,
     });
@@ -49,7 +49,7 @@ describe('AppController', () => {
     await controller.getIndex('search', 'dev', 'MCP', 'stars');
     expect(mockItemsService.listPublishedItems).toHaveBeenCalledWith({
       q: 'search',
-      tag: 'dev',
+      tag: ['dev'],
       type: 'MCP',
       sort: 'stars',
     });

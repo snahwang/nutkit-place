@@ -9,13 +9,15 @@ export class AppController {
   @Render('index')
   async getIndex(
     @Query('q') q?: string,
-    @Query('tag') tag?: string,
+    @Query('tag') tag?: string | string[],
     @Query('type') type?: string,
     @Query('sort') sort?: string,
   ) {
+    const tags = Array.isArray(tag) ? tag : tag ? [tag] : [];
+
     const items = await this.itemsService.listPublishedItems({
       q,
-      tag,
+      tag: tags,
       type,
       sort,
     });
@@ -23,7 +25,7 @@ export class AppController {
     return {
       title: 'Zarket Places',
       q: q || '',
-      tag: tag || '',
+      tags, // array for multi-select
       type: type || '',
       sort: sort || 'latest',
       items,
