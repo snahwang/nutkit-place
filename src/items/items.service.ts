@@ -117,12 +117,14 @@ export class ItemsService {
       items = items.filter((i) => i.tags.includes(query.tag!));
     }
     if (query.q) {
-      const lower = query.q.toLowerCase();
-      items = items.filter(
-        (i) =>
-          i.name.toLowerCase().includes(lower) ||
-          i.description.toLowerCase().includes(lower),
-      );
+      const lower = query.q.trim().replace(/\s+/g, ' ').toLowerCase();
+      if (lower) {
+        items = items.filter(
+          (i) =>
+            i.name.toLowerCase().includes(lower) ||
+            i.description.toLowerCase().includes(lower),
+        );
+      }
     }
     if (query.sort === 'stars') {
       items.sort((a, b) => b.starCount - a.starCount);

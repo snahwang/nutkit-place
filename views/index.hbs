@@ -37,15 +37,30 @@
       </div>
     </div>
 
+    <input type="hidden" name="tag" id="tag-input" value="{{tag}}" />
     <div class="mt-4 flex flex-wrap items-center gap-2">
       <span class="text-xs text-slate-500 mr-2">quick filters</span>
-      <button name="tag" value="dev" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">dev</button>
-      <button name="tag" value="search" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">search</button>
-      <button name="tag" value="devops" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">devops</button>
-      <button name="tag" value="docs" class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">docs</button>
+      <button type="button" data-tag="dev" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">dev</button>
+      <button type="button" data-tag="search" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">search</button>
+      <button type="button" data-tag="devops" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">devops</button>
+      <button type="button" data-tag="docs" class="tag-chip px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">docs</button>
       <div class="flex-1"></div>
       <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-black font-semibold hover:bg-orange-400">apply</button>
     </div>
+    <script>
+    document.querySelectorAll('.tag-chip').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var input = document.getElementById('tag-input');
+        input.value = input.value === btn.dataset.tag ? '' : btn.dataset.tag;
+        document.querySelectorAll('.tag-chip').forEach(function(b) { b.classList.remove('border-orange-500', 'text-white'); });
+        if (input.value) btn.classList.add('border-orange-500', 'text-white');
+      });
+    });
+    (function() {
+      var v = document.getElementById('tag-input').value;
+      if (v) document.querySelectorAll('.tag-chip').forEach(function(b) { if (b.dataset.tag === v) b.classList.add('border-orange-500', 'text-white'); });
+    })();
+    </script>
   </form>
 </section>
 
