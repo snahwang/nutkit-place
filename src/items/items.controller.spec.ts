@@ -46,8 +46,9 @@ describe('ItemsController', () => {
 
   describe('GET /items/new', () => {
     it('should return form data', () => {
-      const result = controller.getNewForm();
+      const result = controller.getNewForm({ user: { name: 'Tester' } } as any);
       expect(result).toHaveProperty('title', 'Register New Item');
+      expect(result).toHaveProperty('user');
     });
   });
 

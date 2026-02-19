@@ -68,8 +68,8 @@ export class ItemsController {
   @Get('items/new')
   @UseGuards(LoginGuard)
   @Render('items/new')
-  getNewForm() {
-    return { title: 'Register New Item' };
+  getNewForm(@Req() req: Request) {
+    return { title: 'Register New Item', user: (req as any).user || null };
   }
 
   @Get('items/:id')

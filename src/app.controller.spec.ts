@@ -33,7 +33,7 @@ describe('AppController', () => {
   });
 
   it('should return index page data with items from DynamoDB', async () => {
-    const result = await controller.getIndex();
+    const result = await controller.getIndex({} as any);
     expect(result).toHaveProperty('title', 'Zarket Places');
     expect(result.items).toHaveLength(1);
     expect(result.items[0].name).toBe('test-mcp');
@@ -46,7 +46,7 @@ describe('AppController', () => {
   });
 
   it('should pass query params to service', async () => {
-    await controller.getIndex('search', 'dev', 'MCP', 'stars');
+    await controller.getIndex({} as any, 'search', 'dev', 'MCP', 'stars');
     expect(mockItemsService.listPublishedItems).toHaveBeenCalledWith({
       q: 'search',
       tag: ['dev'],
