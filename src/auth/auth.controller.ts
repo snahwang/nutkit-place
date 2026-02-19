@@ -13,11 +13,19 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   googleAuthCallback(@Req() req: Request, @Res() res: Response) {
-    if (req.session) {
-      req.session.save(() => res.redirect('/'));
-    } else {
-      res.redirect('/');
-    }
+    // Nest/Passport sometimes doesn't persist the user into the session automatically
+    // when using @Res() redirects. Make it explicit.
+    const user = req.user;
+
+    (req as any).logIn(user, (err: any) => {
+      if (err) {
+        return res.status(500).send('Login failed');
+      }
+      if (req.session) {
+        return req.session.save(() => res.redirect('/'));
+      }
+      return res.redirect('/');
+    });
   }
 
   @Get('logout')
