@@ -54,11 +54,21 @@ export class AppController {
       nextUrl = `/?${params.toString()}`;
     }
 
-    // Tag groups for quick filters (USE_CASE + CATEGORY)
+    // Tag groups for quick filters (CATEGORY + USE_CASE + TARGET_TOOL)
     const allTagGroups = await this.tagsService.getTagGroups();
-    const filterTagGroups = allTagGroups.filter(
-      (g) => g.groupId === 'USE_CASE' || g.groupId === 'CATEGORY',
-    );
+    const visibleGroupIds = new Set(['CATEGORY', 'USE_CASE', 'TARGET_TOOL']);
+    const filterTagGroups = allTagGroups
+      .filter((g) => visibleGroupIds.has(g.groupId))
+      .map((g) => {
+        if (g.groupId === 'CATEGORY') {
+          // Hide payment/auth from category quick filters (UI only)
+          return {
+            ...g,
+            tags: g.tags.filter((t) => t.tagId !== 'payment' && t.tagId !== 'auth'),
+          };
+        }
+        return g;
+      });
 
     return {
       title: 'Zarket Places',
