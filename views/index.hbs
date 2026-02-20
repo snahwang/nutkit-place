@@ -150,32 +150,39 @@
     {{/each}}
   </div>
 
-  {{#if nextUrl}}
-  <div class="mt-8 flex justify-center">
-    <a href="{{nextUrl}}" class="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-200 hover:border-orange-500/50 hover:text-white transition">Next &rarr;</a>
+  <!-- Infinite scroll sentinel -->
+  <div id="scroll-sentinel" class="mt-8 flex justify-center {{#unless hasNext}}hidden{{/unless}}">
+    <span class="text-sm text-slate-500">loading...</span>
   </div>
-  {{/if}}
 </section>
 
 <script>
+window.__PAGE__ = {
+  nextCursor: "{{nextCursor}}",
+  hasNext: {{#if hasNext}}true{{else}}false{{/if}},
+  q: "{{q}}",
+  type: "{{type}}",
+  sort: "{{sort}}",
+  tags: [{{#each tags}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}]
+};
+
 (function() {
+  // Sort selector
   var sortSelect = document.getElementById('sort-select');
   if (sortSelect) {
     sortSelect.addEventListener('change', function() {
       var params = new URLSearchParams(window.location.search);
       params.delete('cursor');
       var val = sortSelect.value;
-      if (val && val !== 'latest') {
-        params.set('sort', val);
-      } else {
-        params.delete('sort');
-      }
+      if (val && val !== 'latest') params.set('sort', val);
+      else params.delete('sort');
       var qs = params.toString();
       window.location.href = '/' + (qs ? '?' + qs : '');
     });
   }
 
-  document.querySelectorAll('.star-toggle').forEach(function(btn) {
+  // Star toggle (works for both SSR and dynamically added cards)
+  function bindStar(btn) {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -197,6 +204,82 @@
           }
         });
     });
-  });
+  }
+  document.querySelectorAll('.star-toggle').forEach(bindStar);
+
+  // Escape HTML for safe interpolation
+  function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+  function buildCard(item) {
+    var starClass = item.starred ? 'text-orange-400' : 'text-slate-500';
+    var iconHtml = item.icon
+      ? '<span class="text-xl">' + esc(item.icon) + '</span>'
+      : '<span class="text-sm font-bold">Z</span>';
+    var tagsHtml = (item.tags || []).map(function(t) {
+      return '<span class="text-xs px-2 py-1 rounded-full bg-slate-900/60 border border-white/10 text-slate-300">' + esc(t) + '</span>';
+    }).join('');
+
+    var a = document.createElement('a');
+    a.href = '/items/' + item.itemId;
+    a.className = 'group block rounded-2xl bg-white/5 border border-white/10 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.45)] hover:shadow-[0_0_0_1px_rgba(249,115,22,0.35),0_10px_30px_rgba(0,0,0,0.35)] transition';
+    a.innerHTML =
+      '<div class="flex items-start justify-between gap-3">' +
+        '<div class="min-w-0">' +
+          '<div class="flex items-center gap-2">' +
+            '<span class="text-[11px] font-semibold tracking-wide uppercase px-2 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300">' + esc(item.type) + '</span>' +
+            '<button type="button" class="star-toggle text-xs ' + starClass + ' hover:text-orange-300" data-item-id="' + esc(item.itemId) + '">★ <span class="star-count">' + (item.starCount || 0) + '</span></button>' +
+          '</div>' +
+          '<h3 class="mt-3 text-lg font-semibold text-slate-100 group-hover:text-white truncate">' + esc(item.name) + '</h3>' +
+          '<p class="mt-2 text-sm text-slate-400 line-clamp-3">' + esc(item.description) + '</p>' +
+        '</div>' +
+        '<div class="shrink-0 h-11 w-11 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-300">' + iconHtml + '</div>' +
+      '</div>' +
+      '<div class="mt-4 flex flex-wrap gap-2">' + tagsHtml + '</div>' +
+      '<div class="mt-5 flex items-center justify-between">' +
+        '<span class="text-xs text-slate-500">' + esc(item.authorName) + '</span>' +
+        '<span class="text-sm font-semibold px-3 py-1.5 rounded-lg bg-orange-500 text-black group-hover:bg-orange-400">open</span>' +
+      '</div>';
+    // Bind star buttons on new card
+    a.querySelectorAll('.star-toggle').forEach(bindStar);
+    return a;
+  }
+
+  // Infinite scroll
+  var page = window.__PAGE__;
+  var grid = document.querySelector('.grid.grid-cols-1');
+  var sentinel = document.getElementById('scroll-sentinel');
+  var loading = false;
+
+  function fetchNext() {
+    if (loading || !page.hasNext || !page.nextCursor) return;
+    loading = true;
+
+    var params = new URLSearchParams();
+    if (page.q) params.append('q', page.q);
+    if (page.type) params.append('type', page.type);
+    if (page.sort && page.sort !== 'latest') params.append('sort', page.sort);
+    page.tags.forEach(function(t) { params.append('tag', t); });
+    params.append('cursor', page.nextCursor);
+
+    fetch('/api/items?' + params.toString())
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        data.items.forEach(function(item) {
+          grid.appendChild(buildCard(item));
+        });
+        page.nextCursor = data.nextCursor || '';
+        page.hasNext = data.hasNext;
+        loading = false;
+        if (!page.hasNext) sentinel.classList.add('hidden');
+      })
+      .catch(function() { loading = false; });
+  }
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting) fetchNext();
+    }, { rootMargin: '200px' });
+    observer.observe(sentinel);
+  }
 })();
 </script>

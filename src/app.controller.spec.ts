@@ -51,6 +51,7 @@ describe('AppController', () => {
     expect(result.items).toHaveLength(1);
     expect(result.items[0].name).toBe('test-mcp');
     expect(result).toHaveProperty('hasNext', false);
+    expect(result).toHaveProperty('nextCursor', '');
     expect(result).toHaveProperty('filterTagGroups');
     expect(mockItemsService.listPublishedItems).toHaveBeenCalledWith({
       q: undefined,
@@ -87,5 +88,29 @@ describe('AppController', () => {
     expect(mockItemsService.listPublishedItems).toHaveBeenCalledWith(
       expect.objectContaining({ cursor }),
     );
+  });
+
+  describe('GET /api/items', () => {
+    it('should return JSON with items, nextCursor, hasNext', async () => {
+      const req = { user: null } as any;
+      const res = { json: jest.fn() } as any;
+
+      await controller.getItemsJson(req, res, 'q', 'dev', 'MCP', 'stars', undefined);
+
+      expect(mockItemsService.listPublishedItems).toHaveBeenCalledWith({
+        q: 'q',
+        tag: ['dev'],
+        type: 'MCP',
+        sort: 'stars',
+        cursor: undefined,
+      });
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hasNext: false,
+          nextCursor: null,
+        }),
+      );
+      expect(res.json.mock.calls[0][0].items).toHaveLength(1);
+    });
   });
 });
