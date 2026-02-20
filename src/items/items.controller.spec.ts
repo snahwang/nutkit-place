@@ -66,8 +66,7 @@ describe('ItemsController', () => {
       } as any);
       expect(result).toHaveProperty('title', 'Register New Item');
       expect(result).toHaveProperty('tagGroups');
-      expect(result).toHaveProperty('emojiPresets');
-      expect(result.emojiPresets.length).toBeGreaterThan(0);
+      expect(result).not.toHaveProperty('emojiPresets');
     });
   });
 
@@ -131,7 +130,7 @@ describe('ItemsController', () => {
       } as any;
       const res = { redirect: jest.fn() } as any;
 
-      await controller.createItem(body, undefined, req, res);
+      await controller.createItem(body, req, res);
 
       expect(mockItemsService.createItem).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -144,22 +143,22 @@ describe('ItemsController', () => {
       expect(res.redirect).toHaveBeenCalledWith('/items/new-id');
     });
 
-    it('should use uploaded file for detailDescription', async () => {
+    it('should write description to both description and detailDescription', async () => {
       mockItemsService.createItem.mockResolvedValue({
         ...mockItem,
         itemId: 'new-id',
       });
-      const file = {
-        buffer: Buffer.from('# From file'),
-      } as Express.Multer.File;
-      const body = { type: 'MCP', name: 'x', description: 'y', tags: '' };
+      const body = { type: 'MCP', name: 'x', description: 'unified text', tags: '' };
       const req = { user: null } as any;
       const res = { redirect: jest.fn() } as any;
 
-      await controller.createItem(body, file, req, res);
+      await controller.createItem(body, req, res);
 
       expect(mockItemsService.createItem).toHaveBeenCalledWith(
-        expect.objectContaining({ detailDescription: '# From file' }),
+        expect.objectContaining({
+          description: 'unified text',
+          detailDescription: 'unified text',
+        }),
       );
     });
   });

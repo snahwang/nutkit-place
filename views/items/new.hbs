@@ -3,10 +3,10 @@
   <p class="text-slate-400 mt-2">AI 도구를 등록합니다.</p>
 </header>
 
-<form action="/api/items" method="POST" enctype="multipart/form-data" class="rounded-2xl bg-white/5 border border-white/10 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.45)] max-w-3xl space-y-6">
+<form action="/api/items" method="POST" class="rounded-2xl bg-white/5 border border-white/10 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.45)] max-w-3xl space-y-6">
 
-  <!-- Basic info -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- type -->
     <div>
       <label for="type" class="text-xs text-slate-400">type</label>
       <select id="type" name="type" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60">
@@ -16,16 +16,34 @@
         <option value="Prompt">Prompt</option>
       </select>
     </div>
+
+    <!-- name -->
     <div>
       <label for="name" class="text-xs text-slate-400">name</label>
       <input id="name" name="name" required placeholder="e.g. payment-mcp" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
     </div>
+
+    <!-- icon -->
     <div class="md:col-span-2">
-      <label for="description" class="text-xs text-slate-400">short description</label>
-      <input id="description" name="description" required placeholder="한 줄 설명" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+      <label class="text-xs text-slate-400">icon</label>
+      <div class="mt-1 flex items-center gap-2 relative">
+        <input type="hidden" id="icon" name="icon" />
+        <span id="icon-preview" class="w-10 h-10 rounded-xl bg-slate-900/60 border border-white/10 text-xl flex items-center justify-center text-slate-500">?</span>
+        <button type="button" id="emoji-picker-toggle" class="px-3 py-2 rounded-xl bg-slate-900/60 border border-white/10 text-sm text-slate-200 hover:border-orange-500/50 hover:bg-white/10">🙂 pick emoji</button>
+        <button type="button" id="icon-clear" class="hidden px-2 py-1 rounded-lg text-xs text-slate-400 hover:text-slate-200">clear</button>
+        <div id="emoji-picker-popover" class="hidden absolute left-0 top-full mt-2 z-50">
+          <emoji-picker></emoji-picker>
+        </div>
+      </div>
     </div>
 
-    <!-- Tags (grouped checkboxes) -->
+    <!-- description -->
+    <div class="md:col-span-2">
+      <label for="description" class="text-xs text-slate-400">description</label>
+      <textarea id="description" name="description" required rows="4" placeholder="도구에 대한 설명 (Markdown 가능)" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60"></textarea>
+    </div>
+
+    <!-- tags -->
     <div class="md:col-span-2">
       <label class="text-xs text-slate-400">tags</label>
       {{#each tagGroups}}
@@ -43,36 +61,10 @@
       {{/each}}
     </div>
 
-    <!-- Icon picker -->
-    <div class="md:col-span-2">
-      <label class="text-xs text-slate-400">icon (emoji)</label>
-      <div class="mt-1 flex flex-wrap items-center gap-2 emoji-presets">
-        {{#each emojiPresets}}
-        <button type="button" data-emoji="{{this}}" class="emoji-btn w-10 h-10 rounded-xl bg-slate-900/60 border border-white/10 text-lg flex items-center justify-center hover:border-orange-500/50">{{this}}</button>
-        {{/each}}
-      </div>
-      <div class="mt-2 flex items-center gap-2 relative">
-        <input id="icon" name="icon" maxlength="2" placeholder="or type any emoji" class="w-40 rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-center text-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
-        <button type="button" id="emoji-picker-toggle" class="w-10 h-10 rounded-xl bg-slate-900/60 border border-white/10 text-lg flex items-center justify-center hover:border-orange-500/50 hover:bg-white/10">🙂</button>
-        <div id="emoji-picker-popover" class="hidden absolute left-0 top-full mt-2 z-50">
-          <emoji-picker></emoji-picker>
-        </div>
-      </div>
-    </div>
-
+    <!-- github url -->
     <div class="md:col-span-2">
       <label for="githubUrl" class="text-xs text-slate-400">github url (optional)</label>
       <input id="githubUrl" name="githubUrl" type="url" placeholder="https://github.com/..." class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
-    </div>
-  </div>
-
-  <!-- Detail description -->
-  <div>
-    <label for="detailDescription" class="text-xs text-slate-400">detail (markdown)</label>
-    <textarea id="detailDescription" name="detailDescription" rows="6" placeholder="상세 설명 (Markdown)" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60"></textarea>
-    <div class="mt-2">
-      <label class="text-xs text-slate-500">or upload .md file:</label>
-      <input type="file" name="mdFile" accept=".md,.markdown,.txt" class="mt-1 block text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-white/10 file:bg-white/5 file:text-slate-200 file:text-xs hover:file:border-orange-500/50" />
     </div>
   </div>
 
@@ -131,40 +123,35 @@
 <script type="module">
 import '/js/emoji-picker-element.js';
 (function() {
-  var input = document.getElementById('icon');
-  var btns = document.querySelectorAll('.emoji-btn');
+  var hidden = document.getElementById('icon');
+  var preview = document.getElementById('icon-preview');
   var toggle = document.getElementById('emoji-picker-toggle');
+  var clearBtn = document.getElementById('icon-clear');
   var popover = document.getElementById('emoji-picker-popover');
   var picker = popover.querySelector('emoji-picker');
 
-  function highlight(val) {
-    btns.forEach(function(b) {
-      if (b.dataset.emoji === val) {
-        b.classList.add('border-orange-400', 'bg-orange-500/20');
-        b.classList.remove('border-white/10');
-      } else {
-        b.classList.remove('border-orange-400', 'bg-orange-500/20');
-        b.classList.add('border-white/10');
-      }
-    });
+  function setIcon(val) {
+    hidden.value = val;
+    if (val) {
+      preview.textContent = val;
+      preview.classList.remove('text-slate-500');
+      clearBtn.classList.remove('hidden');
+    } else {
+      preview.textContent = '?';
+      preview.classList.add('text-slate-500');
+      clearBtn.classList.add('hidden');
+    }
   }
-  btns.forEach(function(b) {
-    b.addEventListener('click', function() {
-      input.value = b.dataset.emoji;
-      highlight(b.dataset.emoji);
-    });
-  });
-  input.addEventListener('input', function() { highlight(input.value); });
 
   toggle.addEventListener('click', function(e) {
     e.stopPropagation();
     popover.classList.toggle('hidden');
   });
   picker.addEventListener('emoji-click', function(e) {
-    input.value = e.detail.unicode;
-    highlight(e.detail.unicode);
+    setIcon(e.detail.unicode);
     popover.classList.add('hidden');
   });
+  clearBtn.addEventListener('click', function() { setIcon(''); });
   document.addEventListener('click', function(e) {
     if (!popover.contains(e.target) && e.target !== toggle) {
       popover.classList.add('hidden');

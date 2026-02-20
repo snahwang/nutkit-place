@@ -8,17 +8,13 @@ import {
   Res,
   Render,
   UseGuards,
-  UseInterceptors,
-  UploadedFile,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { ItemsService, InstallActions, ItemRecord } from './items.service';
 import { TagsService } from '../tags/tags.service';
 import { LoginGuard, ApiAuthGuard } from '../auth/authenticated.guard';
 
 const ADMIN_EMAIL = 'sonar@zigbang.com';
-const EMOJI_PRESETS = ['🔧','🔌','🤖','💬','📦','🔍','💳','🔐','📊','🚀','📝','🧪','🎨','📡','⚙️'];
 
 @Controller()
 export class ItemsController {
@@ -101,7 +97,6 @@ export class ItemsController {
       title: 'Register New Item',
       user: (req as any).user || null,
       tagGroups,
-      emojiPresets: EMOJI_PRESETS,
     };
   }
 
@@ -159,11 +154,12 @@ export class ItemsController {
       });
     }
     const tagGroups = await this.tagsService.getTagGroups();
+    const editDescription = item.detailDescription || item.description || '';
     return res.render('items/edit', {
       title: `Edit ${item.name}`,
       item,
       tagGroups,
-      emojiPresets: EMOJI_PRESETS,
+      editDescription,
     });
   }
 
@@ -171,26 +167,21 @@ export class ItemsController {
 
   @Post('api/items')
   @UseGuards(LoginGuard)
-  @UseInterceptors(FileInterceptor('mdFile'))
   async createItem(
     @Body() body: Record<string, any>,
-    @UploadedFile() file: Express.Multer.File | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const user = req.user;
-    let detailDescription = body.detailDescription || '';
-    if (file) {
-      detailDescription = file.buffer.toString('utf-8');
-    }
+    const desc = body.description || '';
 
     const tags = await this.validateTags(body.tags);
 
     const item = await this.itemsService.createItem({
       type: body.type,
       name: body.name,
-      description: body.description,
-      detailDescription,
+      description: desc,
+      detailDescription: desc,
       tags,
       installActions: this.parseInstallActions(body),
       githubUrl: body.githubUrl || '',
@@ -205,11 +196,9 @@ export class ItemsController {
 
   @Post('api/items/:id')
   @UseGuards(LoginGuard)
-  @UseInterceptors(FileInterceptor('mdFile'))
   async updateItem(
     @Param('id') id: string,
     @Body() body: Record<string, any>,
-    @UploadedFile() file: Express.Multer.File | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
@@ -229,18 +218,14 @@ export class ItemsController {
       });
     }
 
-    let detailDescription: string | undefined = body.detailDescription;
-    if (file) {
-      detailDescription = file.buffer.toString('utf-8');
-    }
-
+    const desc = body.description || '';
     const tags = await this.validateTags(body.tags);
 
     const item = await this.itemsService.updateItem(id, {
       type: body.type,
       name: body.name,
-      description: body.description,
-      detailDescription,
+      description: desc,
+      detailDescription: desc,
       tags,
       installActions: this.parseInstallActions(body),
       githubUrl: body.githubUrl || '',
