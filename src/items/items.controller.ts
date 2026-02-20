@@ -111,7 +111,24 @@ export class ItemsController {
   @UseGuards(LoginGuard)
   @Render('items/new')
   async getNewForm(@Req() req: Request) {
-    const tagGroups = await this.tagsService.getTagGroups();
+    const allTagGroups = await this.tagsService.getTagGroups();
+
+    // In forms, type is already selected separately, so hide TYPE tag group.
+    // Also hide specific CATEGORY tags (UI-only): payment/auth/deploy.
+    const tagGroups = allTagGroups
+      .filter((g) => g.groupId !== 'TYPE')
+      .map((g) => {
+        if (g.groupId === 'CATEGORY') {
+          return {
+            ...g,
+            tags: g.tags.filter(
+              (t) => t.tagId !== 'payment' && t.tagId !== 'auth' && t.tagId !== 'deploy',
+            ),
+          };
+        }
+        return g;
+      });
+
     return {
       title: 'Register New Item',
       user: (req as any).user || null,
@@ -200,7 +217,21 @@ export class ItemsController {
         title: 'Forbidden',
       });
     }
-    const tagGroups = await this.tagsService.getTagGroups();
+    const allTagGroups = await this.tagsService.getTagGroups();
+    const tagGroups = allTagGroups
+      .filter((g) => g.groupId !== 'TYPE')
+      .map((g) => {
+        if (g.groupId === 'CATEGORY') {
+          return {
+            ...g,
+            tags: g.tags.filter(
+              (t) => t.tagId !== 'payment' && t.tagId !== 'auth' && t.tagId !== 'deploy',
+            ),
+          };
+        }
+        return g;
+      });
+
     const docMarkdown = this.getDocMarkdown(item);
     return res.render('items/edit', {
       title: `Edit ${item.name}`,
