@@ -5,7 +5,7 @@
 
 <section class="mb-8">
   <form method="GET" action="/" class="rounded-2xl bg-white/5 border border-white/10 p-4 md:p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.45)]">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
       <div class="md:col-span-2">
         <label class="text-xs text-slate-400">search</label>
         <input
@@ -28,15 +28,6 @@
         </select>
       </div>
 
-      <div>
-        <label class="text-xs text-slate-400">sort</label>
-        <select name="sort" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60">
-          <option value="latest" {{#ifEq sort "latest"}}selected{{/ifEq}}>latest</option>
-          <option value="stars" {{#ifEq sort "stars"}}selected{{/ifEq}}>stars</option>
-          <option value="name_asc" {{#ifEq sort "name_asc"}}selected{{/ifEq}}>name (A-Z)</option>
-          <option value="name_desc" {{#ifEq sort "name_desc"}}selected{{/ifEq}}>name (Z-A)</option>
-        </select>
-      </div>
     </div>
 
     <div id="tag-hidden">
@@ -100,6 +91,18 @@
 </section>
 
 <section>
+  <div class="flex items-center justify-end mb-4">
+    <div class="flex items-center gap-2">
+      <label class="text-xs text-slate-500">sort</label>
+      <select id="sort-select" class="rounded-lg bg-slate-900/60 border border-white/10 px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500/60">
+        <option value="latest" {{#ifEq sort "latest"}}selected{{/ifEq}}>latest</option>
+        <option value="stars" {{#ifEq sort "stars"}}selected{{/ifEq}}>stars</option>
+        <option value="name_asc" {{#ifEq sort "name_asc"}}selected{{/ifEq}}>name (A-Z)</option>
+        <option value="name_desc" {{#ifEq sort "name_desc"}}selected{{/ifEq}}>name (Z-A)</option>
+      </select>
+    </div>
+  </div>
+
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
     {{#each items}}
       <a href="/items/{{this.itemId}}" class="group block rounded-2xl bg-white/5 border border-white/10 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.45)] hover:shadow-[0_0_0_1px_rgba(249,115,22,0.35),0_10px_30px_rgba(0,0,0,0.35)] transition">
@@ -150,6 +153,22 @@
 
 <script>
 (function() {
+  var sortSelect = document.getElementById('sort-select');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', function() {
+      var params = new URLSearchParams(window.location.search);
+      params.delete('cursor');
+      var val = sortSelect.value;
+      if (val && val !== 'latest') {
+        params.set('sort', val);
+      } else {
+        params.delete('sort');
+      }
+      var qs = params.toString();
+      window.location.href = '/' + (qs ? '?' + qs : '');
+    });
+  }
+
   document.querySelectorAll('.star-toggle').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
