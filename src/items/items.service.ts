@@ -48,6 +48,14 @@ export interface ListItemsQuery {
   tag?: string | string[];
   type?: string;
   sort?: string;
+  cursor?: string;
+  pageSize?: number;
+}
+
+export interface ListItemsResult {
+  items: ItemRecord[];
+  nextCursor?: string;
+  hasNext: boolean;
 }
 
 export interface CreateItemInput {
@@ -91,26 +99,44 @@ export class ItemsService {
     };
   }
 
-  async listPublishedItems(query: ListItemsQuery): Promise<ItemRecord[]> {
+  async listPublishedItems(query: ListItemsQuery): Promise<ListItemsResult> {
     const tableName = this.dynamoDbService.getTableName();
     const docClient = this.dynamoDbService.getDocClient();
+    const pageSize = query.pageSize || 12;
 
-    const result = await docClient.send(
-      new ScanCommand({
-        TableName: tableName,
-        FilterExpression:
-          'SK = :sk AND begins_with(PK, :pkPrefix) AND #status = :status',
-        ExpressionAttributeNames: { '#status': 'status' },
-        ExpressionAttributeValues: {
-          ':sk': 'METADATA',
-          ':pkPrefix': 'ITEM#',
-          ':status': 'published',
-        },
-      }),
-    );
+    // Decode cursor (encodes offset into filtered+sorted results)
+    const offset = query.cursor
+      ? (JSON.parse(
+          Buffer.from(query.cursor, 'base64url').toString(),
+        ).o as number) || 0
+      : 0;
 
-    let items = (result.Items ?? []).map((i) => this.mapItem(i));
+    // Scan all published items (loop through DynamoDB internal pages)
+    const allRaw: Record<string, any>[] = [];
+    let exclusiveStartKey: Record<string, any> | undefined;
 
+    do {
+      const result = await docClient.send(
+        new ScanCommand({
+          TableName: tableName,
+          FilterExpression:
+            'SK = :sk AND begins_with(PK, :pkPrefix) AND #status = :status',
+          ExpressionAttributeNames: { '#status': 'status' },
+          ExpressionAttributeValues: {
+            ':sk': 'METADATA',
+            ':pkPrefix': 'ITEM#',
+            ':status': 'published',
+          },
+          ExclusiveStartKey: exclusiveStartKey,
+        }),
+      );
+      allRaw.push(...(result.Items ?? []));
+      exclusiveStartKey = result.LastEvaluatedKey;
+    } while (exclusiveStartKey);
+
+    let items = allRaw.map((i) => this.mapItem(i));
+
+    // App-side filtering
     if (query.type) {
       items = items.filter((i) => i.type === query.type);
     }
@@ -124,7 +150,6 @@ export class ItemsService {
       .filter((t) => t.length > 0);
 
     if (tagFilters.length > 0) {
-      // Multi-select: OR semantics (match any selected tag)
       items = items.filter((i) => tagFilters.some((t) => i.tags.includes(t)));
     }
     if (query.q) {
@@ -137,6 +162,8 @@ export class ItemsService {
         );
       }
     }
+
+    // Sort
     if (query.sort === 'stars') {
       items.sort((a, b) => b.starCount - a.starCount);
     } else if (query.sort === 'name_asc') {
@@ -150,7 +177,16 @@ export class ItemsService {
       );
     }
 
-    return items;
+    // Paginate
+    const pageItems = items.slice(offset, offset + pageSize);
+    const hasNext = offset + pageSize < items.length;
+    const nextCursor = hasNext
+      ? Buffer.from(JSON.stringify({ o: offset + pageSize })).toString(
+          'base64url',
+        )
+      : undefined;
+
+    return { items: pageItems, nextCursor, hasNext };
   }
 
   async getItemById(id: string): Promise<ItemRecord | null> {
@@ -207,7 +243,10 @@ export class ItemsService {
     const tableName = this.dynamoDbService.getTableName();
 
     const existing = await docClient.send(
-      new GetCommand({ TableName: tableName, Key: { PK: `ITEM#${id}`, SK: 'METADATA' } }),
+      new GetCommand({
+        TableName: tableName,
+        Key: { PK: `ITEM#${id}`, SK: 'METADATA' },
+      }),
     );
     if (!existing.Item) return null;
 
@@ -277,7 +316,10 @@ export class ItemsService {
           }),
         )
         .catch(() => null);
-      return { starred: false, starCount: updated?.Attributes?.starCount ?? 0 };
+      return {
+        starred: false,
+        starCount: updated?.Attributes?.starCount ?? 0,
+      };
     }
 
     await docClient.send(

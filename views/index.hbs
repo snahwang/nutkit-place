@@ -44,33 +44,26 @@
         <input type="hidden" name="tag" value="{{this}}" />
       {{/each}}
     </div>
-    <div class="mt-4 flex flex-wrap items-center gap-2">
-      <span class="text-xs text-slate-500 mr-2">quick filters</span>
-      {{#if (hasTag tags "dev")}}
-      <button type="button" data-tag="dev" class="tag-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-500 text-black border border-orange-400">dev</button>
-      {{else}}
-      <button type="button" data-tag="dev" class="tag-chip px-3 py-1.5 rounded-full text-xs bg-white/5 border border-white/10 text-slate-200 hover:border-orange-500/50">dev</button>
-      {{/if}}
-      {{#if (hasTag tags "search")}}
-      <button type="button" data-tag="search" class="tag-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-500 text-black border border-orange-400">search</button>
-      {{else}}
-      <button type="button" data-tag="search" class="tag-chip px-3 py-1.5 rounded-full text-xs bg-white/5 border border-white/10 text-slate-200 hover:border-orange-500/50">search</button>
-      {{/if}}
-      {{#if (hasTag tags "devops")}}
-      <button type="button" data-tag="devops" class="tag-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-500 text-black border border-orange-400">devops</button>
-      {{else}}
-      <button type="button" data-tag="devops" class="tag-chip px-3 py-1.5 rounded-full text-xs bg-white/5 border border-white/10 text-slate-200 hover:border-orange-500/50">devops</button>
-      {{/if}}
-      {{#if (hasTag tags "docs")}}
-      <button type="button" data-tag="docs" class="tag-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-500 text-black border border-orange-400">docs</button>
-      {{else}}
-      <button type="button" data-tag="docs" class="tag-chip px-3 py-1.5 rounded-full text-xs bg-white/5 border border-white/10 text-slate-200 hover:border-orange-500/50">docs</button>
-      {{/if}}
-      <div class="flex-1"></div>
-      {{#if tags.length}}
-      <button type="button" id="clear-tags" class="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-slate-400 hover:text-slate-200 hover:border-white/20">clear tags</button>
-      {{/if}}
-      <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-black font-semibold hover:bg-orange-400">apply</button>
+    <div class="mt-4 space-y-2">
+      {{#each filterTagGroups}}
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-[10px] text-slate-500 min-w-[56px]">{{this.groupName}}</span>
+        {{#each this.tags}}
+          {{#if (hasTag ../../tags this.tagId)}}
+          <button type="button" data-tag="{{this.tagId}}" class="tag-chip px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-500 text-black border border-orange-400">{{this.label}}</button>
+          {{else}}
+          <button type="button" data-tag="{{this.tagId}}" class="tag-chip px-3 py-1.5 rounded-full text-xs bg-white/5 border border-white/10 text-slate-200 hover:border-orange-500/50">{{this.label}}</button>
+          {{/if}}
+        {{/each}}
+      </div>
+      {{/each}}
+      <div class="flex items-center gap-2 pt-1">
+        <div class="flex-1"></div>
+        {{#if tags.length}}
+        <button type="button" id="clear-tags" class="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-slate-400 hover:text-slate-200 hover:border-white/20">clear tags</button>
+        {{/if}}
+        <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-black font-semibold hover:bg-orange-400">apply</button>
+      </div>
     </div>
     <script>
     (function() {
@@ -147,6 +140,12 @@
       </div>
     {{/each}}
   </div>
+
+  {{#if nextUrl}}
+  <div class="mt-8 flex justify-center">
+    <a href="{{nextUrl}}" class="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-200 hover:border-orange-500/50 hover:text-white transition">Next &rarr;</a>
+  </div>
+  {{/if}}
 </section>
 
 <script>

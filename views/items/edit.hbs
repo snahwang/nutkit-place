@@ -24,10 +24,25 @@
       <label for="description" class="text-xs text-slate-400">short description</label>
       <input id="description" name="description" required value="{{item.description}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
     </div>
+
+    <!-- Tags (grouped checkboxes) -->
     <div class="md:col-span-2">
-      <label for="tags" class="text-xs text-slate-400">tags (comma-separated)</label>
-      <input id="tags" name="tags" value="{{join item.tags}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+      <label class="text-xs text-slate-400">tags</label>
+      {{#each tagGroups}}
+      <div class="mt-3">
+        <span class="text-xs font-medium text-slate-300">{{this.groupName}}</span>
+        <div class="mt-1 flex flex-wrap gap-2">
+          {{#each this.tags}}
+          <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs cursor-pointer bg-white/5 border border-white/10 text-slate-200 hover:border-orange-500/50 has-[:checked]:bg-orange-500 has-[:checked]:text-black has-[:checked]:border-orange-400 has-[:checked]:font-semibold">
+            <input type="checkbox" name="tags" value="{{this.tagId}}" {{#if (hasTag ../../item.tags this.tagId)}}checked{{/if}} class="sr-only" />
+            {{this.label}}
+          </label>
+          {{/each}}
+        </div>
+      </div>
+      {{/each}}
     </div>
+
     <div class="md:col-span-2">
       <label for="githubUrl" class="text-xs text-slate-400">github url (optional)</label>
       <input id="githubUrl" name="githubUrl" type="url" value="{{item.githubUrl}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />

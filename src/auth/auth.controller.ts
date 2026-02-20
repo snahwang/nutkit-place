@@ -13,8 +13,6 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   googleAuthCallback(@Req() req: Request, @Res() res: Response) {
-    // Nest/Passport sometimes doesn't persist the user into the session automatically
-    // when using @Res() redirects. Make it explicit.
     const user = req.user;
 
     (req as any).logIn(user, (err: any) => {
@@ -32,69 +30,6 @@ export class AuthController {
   logout(@Req() req: Request, @Res() res: Response) {
     req.logout(() => {
       res.redirect('/');
-    });
-  }
-
-  @Get('whoami')
-  whoami(@Req() req: Request) {
-    return {
-      authenticated: req.isAuthenticated(),
-      user: req.user || null,
-      // Extra session/proxy diagnostics (safe; no secrets)
-      sessionID: (req as any).sessionID,
-      hasSession: Boolean((req as any).session),
-      secure: (req as any).secure,
-      protocol: (req as any).protocol,
-      xForwardedProto: req.headers['x-forwarded-proto'] || null,
-      cookieHeaderPresent: Boolean(req.headers.cookie),
-    };
-  }
-
-  /**
-   * Session cookie diagnostic (no auth). Use this to confirm cookies persist behind ngrok/basic-auth.
-   */
-  @Get('session-test')
-  sessionTest(@Req() req: Request) {
-    const session: any = (req as any).session;
-    if (!session) {
-      return {
-        ok: false,
-        reason: 'no session middleware',
-        sessionID: (req as any).sessionID,
-      };
-    }
-    session.counter = (session.counter || 0) + 1;
-    return {
-      ok: true,
-      counter: session.counter,
-      sessionID: (req as any).sessionID,
-      secure: (req as any).secure,
-      protocol: (req as any).protocol,
-      xForwardedProto: req.headers['x-forwarded-proto'] || null,
-      cookieHeaderPresent: Boolean(req.headers.cookie),
-    };
-  }
-
-  /**
-   * Dev-only: bypass Google OAuth to verify that passport+session works end-to-end.
-   * If this works but Google does not, the issue is in OAuth callback handling.
-   */
-  @Get('dev-login')
-  devLogin(@Req() req: Request, @Res() res: Response) {
-    if (process.env.NODE_ENV !== 'development') {
-      return res.status(404).send('Not found');
-    }
-    const user: any = {
-      id: 'dev-user',
-      email: 'dev@local',
-      name: 'Dev User',
-    };
-    (req as any).logIn(user, (err: any) => {
-      if (err) return res.status(500).send(String(err));
-      if (req.session) {
-        return req.session.save(() => res.redirect('/'));
-      }
-      return res.redirect('/');
     });
   }
 }

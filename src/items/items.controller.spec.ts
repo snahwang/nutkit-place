@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ItemsController } from './items.controller';
 import { ItemsService, ItemRecord } from './items.service';
+import { TagsService } from '../tags/tags.service';
 
 const mockItem: ItemRecord = {
   itemId: 'test-001',
@@ -32,24 +33,39 @@ const mockItemsService = {
   listPublishedItems: jest.fn(),
 };
 
+const mockTagsService = {
+  getTagGroups: jest.fn().mockResolvedValue([]),
+  getAllKnownTagIds: jest
+    .fn()
+    .mockResolvedValue(new Set(['dev', 'api', 'mcp', 'payment'])),
+};
+
 describe('ItemsController', () => {
   let controller: ItemsController;
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockTagsService.getAllKnownTagIds.mockResolvedValue(
+      new Set(['dev', 'api', 'mcp', 'payment']),
+    );
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ItemsController],
-      providers: [{ provide: ItemsService, useValue: mockItemsService }],
+      providers: [
+        { provide: ItemsService, useValue: mockItemsService },
+        { provide: TagsService, useValue: mockTagsService },
+      ],
     }).compile();
 
     controller = module.get<ItemsController>(ItemsController);
   });
 
   describe('GET /items/new', () => {
-    it('should return form data', () => {
-      const result = controller.getNewForm({ user: { name: 'Tester' } } as any);
+    it('should return form data with tagGroups', async () => {
+      const result = await controller.getNewForm({
+        user: { name: 'Tester' },
+      } as any);
       expect(result).toHaveProperty('title', 'Register New Item');
-      expect(result).toHaveProperty('user');
+      expect(result).toHaveProperty('tagGroups');
     });
   });
 
@@ -96,7 +112,7 @@ describe('ItemsController', () => {
   });
 
   describe('POST /api/items', () => {
-    it('should create item and redirect', async () => {
+    it('should create item with validated tags and redirect', async () => {
       mockItemsService.createItem.mockResolvedValue({
         ...mockItem,
         itemId: 'new-id',
@@ -105,7 +121,7 @@ describe('ItemsController', () => {
         type: 'MCP',
         name: 'new-mcp',
         description: 'desc',
-        tags: 'dev, api',
+        tags: 'dev, api, unknown_tag',
         claude_code_command: 'claude mcp add new',
       };
       const req = {

@@ -14,13 +14,17 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { ItemsService, InstallActions, ItemRecord } from './items.service';
+import { TagsService } from '../tags/tags.service';
 import { LoginGuard, ApiAuthGuard } from '../auth/authenticated.guard';
 
 const ADMIN_EMAIL = 'sonar@zigbang.com';
 
 @Controller()
 export class ItemsController {
-  constructor(private readonly itemsService: ItemsService) {}
+  constructor(
+    private readonly itemsService: ItemsService,
+    private readonly tagsService: TagsService,
+  ) {}
 
   /* ── helpers ──────────────────────────────────────── */
 
@@ -65,13 +69,24 @@ export class ItemsController {
   }
 
   private parseTags(raw: unknown): string[] {
+    if (Array.isArray(raw)) {
+      return raw
+        .map((t: any) => String(t).trim().toLowerCase())
+        .filter(Boolean);
+    }
     if (typeof raw === 'string') {
       return raw
         .split(',')
-        .map((t) => t.trim())
+        .map((t) => t.trim().toLowerCase())
         .filter(Boolean);
     }
     return [];
+  }
+
+  private async validateTags(raw: unknown): Promise<string[]> {
+    const parsed = this.parseTags(raw);
+    const knownIds = await this.tagsService.getAllKnownTagIds();
+    return parsed.filter((t) => knownIds.has(t));
   }
 
   /* ── SSR routes ──────────────────────────────────── */
@@ -79,8 +94,13 @@ export class ItemsController {
   @Get('items/new')
   @UseGuards(LoginGuard)
   @Render('items/new')
-  getNewForm(@Req() req: Request) {
-    return { title: 'Register New Item', user: (req as any).user || null };
+  async getNewForm(@Req() req: Request) {
+    const tagGroups = await this.tagsService.getTagGroups();
+    return {
+      title: 'Register New Item',
+      user: (req as any).user || null,
+      tagGroups,
+    };
   }
 
   @Get('items/:id')
@@ -91,13 +111,11 @@ export class ItemsController {
   ) {
     const item = await this.itemsService.getItemById(id);
     if (!item) {
-      return res
-        .status(404)
-        .render('error', {
-          statusCode: 404,
-          message: 'Item not found',
-          title: 'Not Found',
-        });
+      return res.status(404).render('error', {
+        statusCode: 404,
+        message: 'Item not found',
+        title: 'Not Found',
+      });
     }
     const user = req.user as Express.User | undefined;
     const starred = user
@@ -125,24 +143,25 @@ export class ItemsController {
   ) {
     const item = await this.itemsService.getItemById(id);
     if (!item) {
-      return res
-        .status(404)
-        .render('error', {
-          statusCode: 404,
-          message: 'Item not found',
-          title: 'Not Found',
-        });
+      return res.status(404).render('error', {
+        statusCode: 404,
+        message: 'Item not found',
+        title: 'Not Found',
+      });
     }
     if (!this.canUserEdit(req.user as Express.User | undefined, item)) {
-      return res
-        .status(403)
-        .render('error', {
-          statusCode: 403,
-          message: 'Permission denied',
-          title: 'Forbidden',
-        });
+      return res.status(403).render('error', {
+        statusCode: 403,
+        message: 'Permission denied',
+        title: 'Forbidden',
+      });
     }
-    return res.render('items/edit', { title: `Edit ${item.name}`, item });
+    const tagGroups = await this.tagsService.getTagGroups();
+    return res.render('items/edit', {
+      title: `Edit ${item.name}`,
+      item,
+      tagGroups,
+    });
   }
 
   /* ── API routes ──────────────────────────────────── */
@@ -162,12 +181,14 @@ export class ItemsController {
       detailDescription = file.buffer.toString('utf-8');
     }
 
+    const tags = await this.validateTags(body.tags);
+
     const item = await this.itemsService.createItem({
       type: body.type,
       name: body.name,
       description: body.description,
       detailDescription,
-      tags: this.parseTags(body.tags),
+      tags,
       installActions: this.parseInstallActions(body),
       githubUrl: body.githubUrl || '',
       icon: body.icon || '',
@@ -191,22 +212,18 @@ export class ItemsController {
   ) {
     const existing = await this.itemsService.getItemById(id);
     if (!existing) {
-      return res
-        .status(404)
-        .render('error', {
-          statusCode: 404,
-          message: 'Item not found',
-          title: 'Not Found',
-        });
+      return res.status(404).render('error', {
+        statusCode: 404,
+        message: 'Item not found',
+        title: 'Not Found',
+      });
     }
     if (!this.canUserEdit(req.user as Express.User | undefined, existing)) {
-      return res
-        .status(403)
-        .render('error', {
-          statusCode: 403,
-          message: 'Permission denied',
-          title: 'Forbidden',
-        });
+      return res.status(403).render('error', {
+        statusCode: 403,
+        message: 'Permission denied',
+        title: 'Forbidden',
+      });
     }
 
     let detailDescription: string | undefined = body.detailDescription;
@@ -214,25 +231,25 @@ export class ItemsController {
       detailDescription = file.buffer.toString('utf-8');
     }
 
+    const tags = await this.validateTags(body.tags);
+
     const item = await this.itemsService.updateItem(id, {
       type: body.type,
       name: body.name,
       description: body.description,
       detailDescription,
-      tags: this.parseTags(body.tags),
+      tags,
       installActions: this.parseInstallActions(body),
       githubUrl: body.githubUrl || '',
       icon: body.icon || '',
     });
 
     if (!item) {
-      return res
-        .status(404)
-        .render('error', {
-          statusCode: 404,
-          message: 'Item not found',
-          title: 'Not Found',
-        });
+      return res.status(404).render('error', {
+        statusCode: 404,
+        message: 'Item not found',
+        title: 'Not Found',
+      });
     }
     res.redirect(`/items/${item.itemId}`);
   }
@@ -246,22 +263,18 @@ export class ItemsController {
   ) {
     const item = await this.itemsService.getItemById(id);
     if (!item) {
-      return res
-        .status(404)
-        .render('error', {
-          statusCode: 404,
-          message: 'Item not found',
-          title: 'Not Found',
-        });
+      return res.status(404).render('error', {
+        statusCode: 404,
+        message: 'Item not found',
+        title: 'Not Found',
+      });
     }
     if (!this.canUserEdit(req.user as Express.User | undefined, item)) {
-      return res
-        .status(403)
-        .render('error', {
-          statusCode: 403,
-          message: 'Permission denied',
-          title: 'Forbidden',
-        });
+      return res.status(403).render('error', {
+        statusCode: 403,
+        message: 'Permission denied',
+        title: 'Forbidden',
+      });
     }
     await this.itemsService.deleteItem(id);
     res.redirect('/');
