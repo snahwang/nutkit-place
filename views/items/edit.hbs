@@ -43,6 +43,17 @@
       {{/each}}
     </div>
 
+    <!-- Icon picker -->
+    <div class="md:col-span-2">
+      <label class="text-xs text-slate-400">icon (emoji)</label>
+      <div class="mt-1 flex flex-wrap gap-2 emoji-presets">
+        {{#each emojiPresets}}
+        <button type="button" data-emoji="{{this}}" class="emoji-btn w-10 h-10 rounded-xl bg-slate-900/60 border {{#ifEq this ../item.icon}}border-orange-400 bg-orange-500/20{{else}}border-white/10{{/ifEq}} text-lg flex items-center justify-center hover:border-orange-500/50">{{this}}</button>
+        {{/each}}
+      </div>
+      <input id="icon" name="icon" maxlength="2" value="{{item.icon}}" placeholder="or type any emoji" class="mt-2 w-40 rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-center text-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+    </div>
+
     <div class="md:col-span-2">
       <label for="githubUrl" class="text-xs text-slate-400">github url (optional)</label>
       <input id="githubUrl" name="githubUrl" type="url" value="{{item.githubUrl}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
@@ -110,3 +121,28 @@
     <a href="/items/{{item.itemId}}" class="text-sm text-slate-300 hover:text-white">cancel</a>
   </div>
 </form>
+
+<script>
+(function() {
+  var input = document.getElementById('icon');
+  var btns = document.querySelectorAll('.emoji-btn');
+  function highlight(val) {
+    btns.forEach(function(b) {
+      if (b.dataset.emoji === val) {
+        b.classList.add('border-orange-400', 'bg-orange-500/20');
+        b.classList.remove('border-white/10');
+      } else {
+        b.classList.remove('border-orange-400', 'bg-orange-500/20');
+        b.classList.add('border-white/10');
+      }
+    });
+  }
+  btns.forEach(function(b) {
+    b.addEventListener('click', function() {
+      input.value = b.dataset.emoji;
+      highlight(b.dataset.emoji);
+    });
+  });
+  input.addEventListener('input', function() { highlight(input.value); });
+})();
+</script>

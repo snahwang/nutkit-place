@@ -66,6 +66,8 @@ describe('ItemsController', () => {
       } as any);
       expect(result).toHaveProperty('title', 'Register New Item');
       expect(result).toHaveProperty('tagGroups');
+      expect(result).toHaveProperty('emojiPresets');
+      expect(result.emojiPresets.length).toBeGreaterThan(0);
     });
   });
 

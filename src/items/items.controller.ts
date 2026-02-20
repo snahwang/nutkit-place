@@ -18,6 +18,7 @@ import { TagsService } from '../tags/tags.service';
 import { LoginGuard, ApiAuthGuard } from '../auth/authenticated.guard';
 
 const ADMIN_EMAIL = 'sonar@zigbang.com';
+const EMOJI_PRESETS = ['🔧','🔌','🤖','💬','📦','🔍','💳','🔐','📊','🚀','📝','🧪','🎨','📡','⚙️'];
 
 @Controller()
 export class ItemsController {
@@ -100,6 +101,7 @@ export class ItemsController {
       title: 'Register New Item',
       user: (req as any).user || null,
       tagGroups,
+      emojiPresets: EMOJI_PRESETS,
     };
   }
 
@@ -161,6 +163,7 @@ export class ItemsController {
       title: `Edit ${item.name}`,
       item,
       tagGroups,
+      emojiPresets: EMOJI_PRESETS,
     });
   }
 
