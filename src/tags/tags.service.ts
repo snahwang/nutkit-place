@@ -14,6 +14,8 @@ export interface TagGroup {
   tags: TagItem[];
 }
 
+const HIDDEN_TAGS: Set<string> = new Set(['windsurf', 'copilot']);
+
 @Injectable()
 export class TagsService {
   private cache: TagGroup[] | null = null;
@@ -54,6 +56,7 @@ export class TagsService {
 
     const groups = Array.from(groupMap.values());
     for (const g of groups) {
+      g.tags = g.tags.filter((t) => !HIDDEN_TAGS.has(t.tagId));
       g.tags.sort((a, b) => a.order - b.order);
     }
     groups.sort((a, b) => a.groupId.localeCompare(b.groupId));
