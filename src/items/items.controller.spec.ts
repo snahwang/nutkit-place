@@ -245,12 +245,18 @@ describe('ItemsController', () => {
       );
     });
 
-    it('should write description to both description and detailDescription', async () => {
+    it('should save short/ detail descriptions separately', async () => {
       mockItemsService.createItem.mockResolvedValue({
         ...mockItem,
         itemId: 'new-id',
       });
-      const body = { type: 'MCP', name: 'x', description: 'unified text', tags: '' };
+      const body = {
+        type: 'MCP',
+        name: 'x',
+        description: 'short text',
+        detailDescription: 'detail text',
+        tags: '',
+      };
       const req = { user: null } as any;
       const res = { redirect: jest.fn() } as any;
 
@@ -258,8 +264,8 @@ describe('ItemsController', () => {
 
       expect(mockItemsService.createItem).toHaveBeenCalledWith(
         expect.objectContaining({
-          description: 'unified text',
-          detailDescription: 'unified text',
+          description: 'short text',
+          detailDescription: 'detail text',
         }),
       );
     });

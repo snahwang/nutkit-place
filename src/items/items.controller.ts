@@ -201,13 +201,11 @@ export class ItemsController {
       });
     }
     const tagGroups = await this.tagsService.getTagGroups();
-    const editDescription = item.detailDescription || item.description || '';
     const docMarkdown = this.getDocMarkdown(item);
     return res.render('items/edit', {
       title: `Edit ${item.name}`,
       item,
       tagGroups,
-      editDescription,
       docMarkdown,
     });
   }
@@ -224,7 +222,8 @@ export class ItemsController {
     @Res() res: Response,
   ) {
     const user = req.user;
-    const desc = body.description || '';
+    const shortDesc = body.description || '';
+    const detailDesc = body.detailDescription || '';
     const type = body.type || 'MCP';
 
     // For Skill/Prompt, uploaded .md replaces doc_markdown textarea
@@ -237,8 +236,8 @@ export class ItemsController {
     const item = await this.itemsService.createItem({
       type,
       name: body.name,
-      description: desc,
-      detailDescription: desc,
+      description: shortDesc,
+      detailDescription: detailDesc,
       tags,
       installActions: this.parseInstallActions(body, type),
       githubUrl: body.githubUrl || '',
@@ -277,7 +276,8 @@ export class ItemsController {
       });
     }
 
-    const desc = body.description || '';
+    const shortDesc = body.description || '';
+    const detailDesc = body.detailDescription || '';
     const type = body.type || existing.type;
 
     if (file && DOC_TYPES.has(type)) {
@@ -289,8 +289,8 @@ export class ItemsController {
     const item = await this.itemsService.updateItem(id, {
       type,
       name: body.name,
-      description: desc,
-      detailDescription: desc,
+      description: shortDesc,
+      detailDescription: detailDesc,
       tags,
       installActions: this.parseInstallActions(body, type),
       githubUrl: body.githubUrl || '',

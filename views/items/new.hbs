@@ -37,10 +37,16 @@
       </div>
     </div>
 
-    <!-- description -->
+    <!-- short description -->
     <div class="md:col-span-2">
-      <label for="description" class="text-xs text-slate-400">description</label>
-      <textarea id="description" name="description" required rows="4" placeholder="도구에 대한 설명" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60"></textarea>
+      <label for="description" class="text-xs text-slate-400">short description</label>
+      <input id="description" name="description" required placeholder="목록에서 보일 짧은 설명 (1~2줄)" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+    </div>
+
+    <!-- detail description -->
+    <div class="md:col-span-2">
+      <label for="detailDescription" class="text-xs text-slate-400">detail</label>
+      <textarea id="detailDescription" name="detailDescription" rows="8" placeholder="상세 설명 (MCP/Plugin은 markdown 렌더, Skill/Prompt는 raw로 표시)" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/60"></textarea>
     </div>
 
     <!-- tags -->
