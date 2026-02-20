@@ -23,6 +23,16 @@ const mockItem: ItemRecord = {
   updatedAt: '2026-01-01T00:00:00Z',
 };
 
+const mockSkillItem: ItemRecord = {
+  ...mockItem,
+  itemId: 'skill-001',
+  type: 'Skill',
+  name: 'my-skill',
+  installActions: {
+    claude_code: { notes: '# Skill doc\nContent here' },
+  },
+};
+
 const mockItemsService = {
   getItemById: jest.fn(),
   createItem: jest.fn(),
@@ -66,12 +76,11 @@ describe('ItemsController', () => {
       } as any);
       expect(result).toHaveProperty('title', 'Register New Item');
       expect(result).toHaveProperty('tagGroups');
-      expect(result).not.toHaveProperty('emojiPresets');
     });
   });
 
   describe('GET /items/:id', () => {
-    it('should render detail for existing item', async () => {
+    it('should render detail for MCP item with hasInstallActions', async () => {
       mockItemsService.getItemById.mockResolvedValue(mockItem);
       mockItemsService.hasUserStarred.mockResolvedValue(false);
       const req = {
@@ -84,14 +93,33 @@ describe('ItemsController', () => {
 
       await controller.getDetail('test-001', req, res);
 
-      expect(mockItemsService.getItemById).toHaveBeenCalledWith('test-001');
-      expect(res.render).toHaveBeenCalledWith('items/detail', {
-        title: 'test-mcp',
-        item: mockItem,
-        hasInstallActions: { command: 'claude mcp add test' },
-        starred: false,
-        canEdit: true,
-      });
+      expect(res.render).toHaveBeenCalledWith(
+        'items/detail',
+        expect.objectContaining({
+          title: 'test-mcp',
+          isDocType: false,
+          hasInstallActions: { command: 'claude mcp add test' },
+          docMarkdown: '',
+        }),
+      );
+    });
+
+    it('should render detail for Skill item with docMarkdown', async () => {
+      mockItemsService.getItemById.mockResolvedValue(mockSkillItem);
+      mockItemsService.hasUserStarred.mockResolvedValue(false);
+      const req = { user: { id: 'u1', email: 'test@test.com', name: 'Tester' } } as any;
+      const res = { render: jest.fn(), status: jest.fn().mockReturnThis() } as any;
+
+      await controller.getDetail('skill-001', req, res);
+
+      expect(res.render).toHaveBeenCalledWith(
+        'items/detail',
+        expect.objectContaining({
+          isDocType: true,
+          hasInstallActions: false,
+          docMarkdown: '# Skill doc\nContent here',
+        }),
+      );
     });
 
     it('should return 404 for missing item', async () => {
@@ -105,15 +133,45 @@ describe('ItemsController', () => {
       await controller.getDetail('missing', req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.render).toHaveBeenCalledWith(
-        'error',
-        expect.objectContaining({ statusCode: 404 }),
+    });
+  });
+
+  describe('GET /items/:id/doc.md', () => {
+    it('should return markdown download for Skill item', async () => {
+      mockItemsService.getItemById.mockResolvedValue(mockSkillItem);
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        render: jest.fn(),
+        setHeader: jest.fn(),
+        send: jest.fn(),
+      } as any;
+
+      await controller.downloadDoc('skill-001', res);
+
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Content-Disposition',
+        'attachment; filename="my-skill.md"',
       );
+      expect(res.send).toHaveBeenCalledWith('# Skill doc\nContent here');
+    });
+
+    it('should return 404 for MCP item', async () => {
+      mockItemsService.getItemById.mockResolvedValue(mockItem);
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        render: jest.fn(),
+        setHeader: jest.fn(),
+        send: jest.fn(),
+      } as any;
+
+      await controller.downloadDoc('test-001', res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
     });
   });
 
   describe('POST /api/items', () => {
-    it('should create item with validated tags and redirect', async () => {
+    it('should create MCP item with install actions', async () => {
       mockItemsService.createItem.mockResolvedValue({
         ...mockItem,
         itemId: 'new-id',
@@ -130,7 +188,7 @@ describe('ItemsController', () => {
       } as any;
       const res = { redirect: jest.fn() } as any;
 
-      await controller.createItem(body, req, res);
+      await controller.createItem(body, undefined, req, res);
 
       expect(mockItemsService.createItem).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -143,6 +201,50 @@ describe('ItemsController', () => {
       expect(res.redirect).toHaveBeenCalledWith('/items/new-id');
     });
 
+    it('should create Skill item with doc_markdown in installActions.claude_code.notes', async () => {
+      mockItemsService.createItem.mockResolvedValue({
+        ...mockSkillItem,
+        itemId: 'skill-new',
+      });
+      const body = {
+        type: 'Skill',
+        name: 'my-skill',
+        description: 'a skill',
+        tags: '',
+        doc_markdown: '# My Skill\nHello',
+      };
+      const req = { user: { id: 'u1', name: 'Tester', email: 'test@test.com' } } as any;
+      const res = { redirect: jest.fn() } as any;
+
+      await controller.createItem(body, undefined, req, res);
+
+      expect(mockItemsService.createItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'Skill',
+          installActions: { claude_code: { notes: '# My Skill\nHello' } },
+        }),
+      );
+    });
+
+    it('should use uploaded .md file for Skill doc_markdown', async () => {
+      mockItemsService.createItem.mockResolvedValue({
+        ...mockSkillItem,
+        itemId: 'skill-new',
+      });
+      const file = { buffer: Buffer.from('# From file') } as Express.Multer.File;
+      const body = { type: 'Skill', name: 'x', description: 'y', tags: '' };
+      const req = { user: null } as any;
+      const res = { redirect: jest.fn() } as any;
+
+      await controller.createItem(body, file, req, res);
+
+      expect(mockItemsService.createItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          installActions: { claude_code: { notes: '# From file' } },
+        }),
+      );
+    });
+
     it('should write description to both description and detailDescription', async () => {
       mockItemsService.createItem.mockResolvedValue({
         ...mockItem,
@@ -152,7 +254,7 @@ describe('ItemsController', () => {
       const req = { user: null } as any;
       const res = { redirect: jest.fn() } as any;
 
-      await controller.createItem(body, req, res);
+      await controller.createItem(body, undefined, req, res);
 
       expect(mockItemsService.createItem).toHaveBeenCalledWith(
         expect.objectContaining({

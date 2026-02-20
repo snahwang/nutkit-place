@@ -5,6 +5,7 @@ import { engine } from 'express-handlebars';
 import * as session from 'express-session';
 import * as passport from 'passport';
 import { Request, Response, NextFunction } from 'express';
+import { marked } from 'marked';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -35,6 +36,15 @@ async function bootstrap() {
         hasTag: function (tags: unknown, tag: unknown) {
           if (!Array.isArray(tags)) return false;
           return tags.includes(tag);
+        },
+        markdown: function (text: unknown) {
+          if (typeof text !== 'string' || !text) return '';
+          return marked.parse(text, { async: false });
+        },
+        isDocType: function (this: any, type: unknown, options: any) {
+          const docTypes = ['Skill', 'Prompt'];
+          if (docTypes.includes(type as string)) return options.fn(this);
+          return options.inverse(this);
         },
       },
     }),

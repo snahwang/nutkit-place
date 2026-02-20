@@ -8,13 +8,17 @@ import {
   Res,
   Render,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { ItemsService, InstallActions, ItemRecord } from './items.service';
 import { TagsService } from '../tags/tags.service';
 import { LoginGuard, ApiAuthGuard } from '../auth/authenticated.guard';
 
 const ADMIN_EMAIL = 'sonar@zigbang.com';
+const DOC_TYPES = new Set(['Skill', 'Prompt']);
 
 @Controller()
 export class ItemsController {
@@ -34,7 +38,18 @@ export class ItemsController {
     return user.email === item.authorEmail;
   }
 
-  private parseInstallActions(body: Record<string, any>): InstallActions {
+  private parseInstallActions(
+    body: Record<string, any>,
+    type: string,
+  ): InstallActions {
+    // Skill/Prompt: single markdown doc stored in claude_code.notes
+    if (DOC_TYPES.has(type)) {
+      const md = body.doc_markdown || '';
+      if (!md) return {};
+      return { claude_code: { notes: md } };
+    }
+
+    // MCP/Plugin: full install fields
     const actions: InstallActions = {};
     if (
       body.claude_code_command ||
@@ -86,6 +101,10 @@ export class ItemsController {
     return parsed.filter((t) => knownIds.has(t));
   }
 
+  private getDocMarkdown(item: ItemRecord): string {
+    return item.installActions?.claude_code?.notes || '';
+  }
+
   /* ── SSR routes ──────────────────────────────────── */
 
   @Get('items/new')
@@ -118,17 +137,45 @@ export class ItemsController {
     const starred = user
       ? await this.itemsService.hasUserStarred(user.id, id)
       : false;
+    const isDocType = DOC_TYPES.has(item.type);
     const hasInstallActions =
+      !isDocType &&
       item.installActions &&
       (item.installActions.claude_code || item.installActions.cursor);
     const canEdit = this.canUserEdit(user, item);
+    const docMarkdown = isDocType ? this.getDocMarkdown(item) : '';
     return res.render('items/detail', {
       title: item.name,
       item,
       hasInstallActions,
       starred,
       canEdit,
+      isDocType,
+      docMarkdown,
     });
+  }
+
+  @Get('items/:id/doc.md')
+  async downloadDoc(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    const item = await this.itemsService.getItemById(id);
+    if (!item || !DOC_TYPES.has(item.type)) {
+      return res.status(404).render('error', {
+        statusCode: 404,
+        message: 'Document not found',
+        title: 'Not Found',
+      });
+    }
+    const md = this.getDocMarkdown(item);
+    const filename = `${item.name}.md`;
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${filename}"`,
+    );
+    res.send(md);
   }
 
   @Get('items/:id/edit')
@@ -155,11 +202,13 @@ export class ItemsController {
     }
     const tagGroups = await this.tagsService.getTagGroups();
     const editDescription = item.detailDescription || item.description || '';
+    const docMarkdown = this.getDocMarkdown(item);
     return res.render('items/edit', {
       title: `Edit ${item.name}`,
       item,
       tagGroups,
       editDescription,
+      docMarkdown,
     });
   }
 
@@ -167,23 +216,31 @@ export class ItemsController {
 
   @Post('api/items')
   @UseGuards(LoginGuard)
+  @UseInterceptors(FileInterceptor('mdFile'))
   async createItem(
     @Body() body: Record<string, any>,
+    @UploadedFile() file: Express.Multer.File | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const user = req.user;
     const desc = body.description || '';
+    const type = body.type || 'MCP';
+
+    // For Skill/Prompt, uploaded .md replaces doc_markdown textarea
+    if (file && DOC_TYPES.has(type)) {
+      body.doc_markdown = file.buffer.toString('utf-8');
+    }
 
     const tags = await this.validateTags(body.tags);
 
     const item = await this.itemsService.createItem({
-      type: body.type,
+      type,
       name: body.name,
       description: desc,
       detailDescription: desc,
       tags,
-      installActions: this.parseInstallActions(body),
+      installActions: this.parseInstallActions(body, type),
       githubUrl: body.githubUrl || '',
       icon: body.icon || '',
       authorId: user?.id || '',
@@ -196,9 +253,11 @@ export class ItemsController {
 
   @Post('api/items/:id')
   @UseGuards(LoginGuard)
+  @UseInterceptors(FileInterceptor('mdFile'))
   async updateItem(
     @Param('id') id: string,
     @Body() body: Record<string, any>,
+    @UploadedFile() file: Express.Multer.File | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
@@ -219,15 +278,21 @@ export class ItemsController {
     }
 
     const desc = body.description || '';
+    const type = body.type || existing.type;
+
+    if (file && DOC_TYPES.has(type)) {
+      body.doc_markdown = file.buffer.toString('utf-8');
+    }
+
     const tags = await this.validateTags(body.tags);
 
     const item = await this.itemsService.updateItem(id, {
-      type: body.type,
+      type,
       name: body.name,
       description: desc,
       detailDescription: desc,
       tags,
-      installActions: this.parseInstallActions(body),
+      installActions: this.parseInstallActions(body, type),
       githubUrl: body.githubUrl || '',
       icon: body.icon || '',
     });

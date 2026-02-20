@@ -10,8 +10,9 @@
         <span class="text-[11px] font-semibold tracking-wide uppercase px-2 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300">{{item.type}}</span>
         <button type="button" class="star-toggle flex items-center gap-1 text-xs {{#if starred}}text-orange-400{{else}}text-slate-500{{/if}} hover:text-orange-300" data-item-id="{{item.itemId}}">&#9733; <span class="star-count">{{item.starCount}}</span></button>
       </div>
-      <h1 class="mt-3 text-2xl font-bold tracking-tight">{{item.name}}</h1>
-      <p class="mt-2 text-slate-400">{{item.description}}</p>
+      <h1 class="mt-3 text-2xl font-bold tracking-tight">
+        {{#if item.icon}}<span class="mr-2">{{item.icon}}</span>{{/if}}{{item.name}}
+      </h1>
     </div>
 
     {{#if canEdit}}
@@ -28,7 +29,19 @@
   </div>
   {{/if}}
 
-  <!-- Install Actions (per-tool) -->
+  <!-- Detail description -->
+  {{#if item.detailDescription}}
+  <div class="mt-6 border-t border-white/10 pt-6">
+    <h2 class="text-sm font-semibold text-slate-200 mb-2">description</h2>
+    {{#isDocType item.type}}
+      <pre class="whitespace-pre-wrap text-sm bg-slate-900/60 border border-white/10 rounded-xl p-4 text-slate-200">{{item.detailDescription}}</pre>
+    {{else}}
+      <div class="prose prose-invert max-w-none text-slate-200">{{{markdown item.detailDescription}}}</div>
+    {{/isDocType}}
+  </div>
+  {{/if}}
+
+  <!-- Install Actions: MCP/Plugin (per-tool) -->
   {{#if hasInstallActions}}
   <div class="mt-6 border-t border-white/10 pt-6 space-y-4">
     <h2 class="text-sm font-semibold text-slate-200">install / apply</h2>
@@ -78,6 +91,22 @@
   </div>
   {{/if}}
 
+  <!-- Doc markdown: Skill/Prompt -->
+  {{#isDocType item.type}}
+  {{#if docMarkdown}}
+  <div class="mt-6 border-t border-white/10 pt-6">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-sm font-semibold text-slate-200">document</h2>
+      <div class="flex items-center gap-2">
+        <button id="copy-doc" class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">copy</button>
+        <a href="/items/{{item.itemId}}/doc.md" class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50">download .md</a>
+      </div>
+    </div>
+    <pre id="doc-content" class="whitespace-pre-wrap text-sm bg-slate-900/60 border border-white/10 rounded-xl p-4 text-slate-200">{{docMarkdown}}</pre>
+  </div>
+  {{/if}}
+  {{/isDocType}}
+
   <!-- Legacy installCommand fallback -->
   {{#if item.installCommand}}
   {{#unless hasInstallActions}}
@@ -89,16 +118,6 @@
     </div>
   </div>
   {{/unless}}
-  {{/if}}
-
-  <!-- Detail description -->
-  {{#if item.detailDescription}}
-  <div class="mt-6 border-t border-white/10 pt-6">
-    <h2 class="text-sm font-semibold text-slate-200 mb-2">detail</h2>
-    <div class="prose prose-invert max-w-none text-slate-200">
-      <pre class="whitespace-pre-wrap text-sm bg-slate-900/60 border border-white/10 rounded-xl p-4">{{item.detailDescription}}</pre>
-    </div>
-  </div>
   {{/if}}
 
   <!-- GitHub link -->
@@ -132,6 +151,15 @@ document.querySelectorAll('.copy-btn').forEach(function(btn) {
     setTimeout(function() { btn.textContent = 'copy'; }, 2000);
   });
 });
+var copyDoc = document.getElementById('copy-doc');
+if (copyDoc) {
+  copyDoc.addEventListener('click', function() {
+    var content = document.getElementById('doc-content');
+    navigator.clipboard.writeText(content ? content.textContent || '' : '');
+    copyDoc.textContent = 'copied!';
+    setTimeout(function() { copyDoc.textContent = 'copy'; }, 2000);
+  });
+}
 document.querySelectorAll('.star-toggle').forEach(function(btn) {
   btn.addEventListener('click', function(e) {
     e.preventDefault();

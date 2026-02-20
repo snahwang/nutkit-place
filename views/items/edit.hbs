@@ -3,7 +3,7 @@
   <p class="text-slate-400 mt-2">{{item.name}} 수정</p>
 </header>
 
-<form action="/api/items/{{item.itemId}}" method="POST" class="rounded-2xl bg-white/5 border border-white/10 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.45)] max-w-3xl space-y-6">
+<form action="/api/items/{{item.itemId}}" method="POST" enctype="multipart/form-data" class="rounded-2xl bg-white/5 border border-white/10 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_20px_50px_rgba(0,0,0,0.45)] max-w-3xl space-y-6">
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <!-- type -->
@@ -68,51 +68,66 @@
     </div>
   </div>
 
-  <!-- Install actions: Claude Code -->
-  <fieldset class="border border-white/10 rounded-xl p-4">
-    <legend class="text-xs font-semibold text-orange-400 px-2">Claude Code</legend>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div class="md:col-span-2">
-        <label class="text-xs text-slate-400">install command</label>
-        <input name="claude_code_command" value="{{item.installActions.claude_code.command}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+  <!-- Install actions: MCP/Plugin -->
+  <div id="install-section">
+    <fieldset class="border border-white/10 rounded-xl p-4">
+      <legend class="text-xs font-semibold text-orange-400 px-2">Claude Code</legend>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="md:col-span-2">
+          <label class="text-xs text-slate-400">install command</label>
+          <input name="claude_code_command" value="{{item.installActions.claude_code.command}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-400">url</label>
+          <input name="claude_code_url" value="{{item.installActions.claude_code.url}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-400">config path</label>
+          <input name="claude_code_path" value="{{item.installActions.claude_code.path}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-xs text-slate-400">notes</label>
+          <input name="claude_code_notes" value="{{item.installActions.claude_code.notes}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+        </div>
       </div>
-      <div>
-        <label class="text-xs text-slate-400">url</label>
-        <input name="claude_code_url" value="{{item.installActions.claude_code.url}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
-      </div>
-      <div>
-        <label class="text-xs text-slate-400">config path</label>
-        <input name="claude_code_path" value="{{item.installActions.claude_code.path}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
-      </div>
-      <div class="md:col-span-2">
-        <label class="text-xs text-slate-400">notes</label>
-        <input name="claude_code_notes" value="{{item.installActions.claude_code.notes}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
-      </div>
-    </div>
-  </fieldset>
+    </fieldset>
 
-  <!-- Install actions: Cursor -->
-  <fieldset class="border border-white/10 rounded-xl p-4">
-    <legend class="text-xs font-semibold text-blue-400 px-2">Cursor</legend>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div class="md:col-span-2">
-        <label class="text-xs text-slate-400">install command</label>
-        <input name="cursor_command" value="{{item.installActions.cursor.command}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+    <fieldset class="border border-white/10 rounded-xl p-4 mt-4">
+      <legend class="text-xs font-semibold text-blue-400 px-2">Cursor</legend>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="md:col-span-2">
+          <label class="text-xs text-slate-400">install command</label>
+          <input name="cursor_command" value="{{item.installActions.cursor.command}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-400">url (e.g. cursor:// deep link)</label>
+          <input name="cursor_url" value="{{item.installActions.cursor.url}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-400">config path</label>
+          <input name="cursor_path" value="{{item.installActions.cursor.path}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-xs text-slate-400">notes</label>
+          <input name="cursor_notes" value="{{item.installActions.cursor.notes}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+        </div>
       </div>
+    </fieldset>
+  </div>
+
+  <!-- Doc markdown: Skill/Prompt -->
+  <div id="doc-section" class="hidden">
+    <fieldset class="border border-white/10 rounded-xl p-4">
+      <legend class="text-xs font-semibold text-purple-400 px-2">Document (Markdown)</legend>
       <div>
-        <label class="text-xs text-slate-400">url (e.g. cursor:// deep link)</label>
-        <input name="cursor_url" value="{{item.installActions.cursor.url}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
+        <textarea name="doc_markdown" rows="10" class="w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60 text-sm font-mono">{{docMarkdown}}</textarea>
+        <div class="mt-2">
+          <label class="text-xs text-slate-500">or upload .md file (replaces textarea):</label>
+          <input type="file" name="mdFile" accept=".md,.markdown,.txt" class="mt-1 block text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-white/10 file:bg-white/5 file:text-slate-200 file:text-xs hover:file:border-orange-500/50" />
+        </div>
       </div>
-      <div>
-        <label class="text-xs text-slate-400">config path</label>
-        <input name="cursor_path" value="{{item.installActions.cursor.path}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
-      </div>
-      <div class="md:col-span-2">
-        <label class="text-xs text-slate-400">notes</label>
-        <input name="cursor_notes" value="{{item.installActions.cursor.notes}}" class="mt-1 w-full rounded-xl bg-slate-900/60 border border-white/10 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-500/60" />
-      </div>
-    </div>
-  </fieldset>
+    </fieldset>
+  </div>
 
   <div class="flex items-center gap-3">
     <button type="submit" class="px-5 py-2.5 rounded-xl bg-orange-500 text-black font-semibold hover:bg-orange-400">update</button>
@@ -123,6 +138,7 @@
 <script type="module">
 import '/js/emoji-picker-element.js';
 (function() {
+  // Emoji picker
   var hidden = document.getElementById('icon');
   var preview = document.getElementById('icon-preview');
   var toggle = document.getElementById('emoji-picker-toggle');
@@ -157,5 +173,19 @@ import '/js/emoji-picker-element.js';
       popover.classList.add('hidden');
     }
   });
+
+  // Type toggle: show/hide install vs doc sections
+  var typeSelect = document.getElementById('type');
+  var installSection = document.getElementById('install-section');
+  var docSection = document.getElementById('doc-section');
+  var docTypes = ['Skill', 'Prompt'];
+
+  function toggleSections() {
+    var isDoc = docTypes.indexOf(typeSelect.value) !== -1;
+    installSection.style.display = isDoc ? 'none' : '';
+    docSection.classList.toggle('hidden', !isDoc);
+  }
+  typeSelect.addEventListener('change', toggleSections);
+  toggleSections();
 })();
 </script>
