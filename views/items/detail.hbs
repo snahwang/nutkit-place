@@ -91,6 +91,17 @@
   </div>
   {{/if}}
 
+  <!-- Skill install command (repo-based) -->
+  {{#if skillInstallCommand}}
+  <div class="mt-6 border-t border-white/10 pt-6">
+    <h2 class="text-sm font-semibold text-slate-200 mb-2">install</h2>
+    <div class="flex items-center gap-2 bg-black/30 rounded-lg p-3">
+      <code class="flex-1 text-sm text-green-400 font-mono break-all">{{skillInstallCommand}}</code>
+      <button class="copy-btn shrink-0 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-200 hover:border-orange-500/50" data-copy="{{skillInstallCommand}}">copy</button>
+    </div>
+  </div>
+  {{/if}}
+
   <!-- Doc markdown: Skill/Prompt -->
   {{#isDocType item.type}}
   {{#if docMarkdown}}

@@ -33,6 +33,20 @@ const mockSkillItem: ItemRecord = {
   },
 };
 
+const mockRepoSkillItem: ItemRecord = {
+  ...mockItem,
+  itemId: 'skill-repo-001',
+  type: 'Skill',
+  name: 'repo-skill',
+  githubUrl: 'https://github.com/acme/cool-skill',
+  installActions: {
+    claude_code: {
+      command: 'npx skills add acme/cool-skill',
+      notes: '# Cool Skill\nREADME content',
+    },
+  },
+};
+
 const mockItemsService = {
   getItemById: jest.fn(),
   createItem: jest.fn(),
@@ -118,6 +132,25 @@ describe('ItemsController', () => {
           isDocType: true,
           hasInstallActions: false,
           docMarkdown: '# Skill doc\nContent here',
+          skillInstallCommand: '',
+        }),
+      );
+    });
+
+    it('should render detail for repo-based Skill with skillInstallCommand', async () => {
+      mockItemsService.getItemById.mockResolvedValue(mockRepoSkillItem);
+      mockItemsService.hasUserStarred.mockResolvedValue(false);
+      const req = { user: { id: 'u1', email: 'test@test.com', name: 'Tester' } } as any;
+      const res = { render: jest.fn(), status: jest.fn().mockReturnThis() } as any;
+
+      await controller.getDetail('skill-repo-001', req, res);
+
+      expect(res.render).toHaveBeenCalledWith(
+        'items/detail',
+        expect.objectContaining({
+          isDocType: true,
+          skillInstallCommand: 'npx skills add acme/cool-skill',
+          docMarkdown: '# Cool Skill\nREADME content',
         }),
       );
     });
@@ -199,6 +232,45 @@ describe('ItemsController', () => {
         }),
       );
       expect(res.redirect).toHaveBeenCalledWith('/items/new-id');
+    });
+
+    it('should create Skill with skill_repo: fetch README and set install command', async () => {
+      const originalFetch = global.fetch;
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve('# Fetched README'),
+      }) as any;
+
+      mockItemsService.createItem.mockResolvedValue({
+        ...mockRepoSkillItem,
+        itemId: 'skill-repo-new',
+      });
+      const body = {
+        type: 'Skill',
+        name: 'repo-skill',
+        description: 'a repo skill',
+        tags: '',
+        skill_repo: 'acme/cool-skill',
+      };
+      const req = { user: { id: 'u1', name: 'Tester', email: 'test@test.com' } } as any;
+      const res = { redirect: jest.fn() } as any;
+
+      await controller.createItem(body, undefined, req, res);
+
+      expect(mockItemsService.createItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'Skill',
+          githubUrl: 'https://github.com/acme/cool-skill',
+          installActions: {
+            claude_code: {
+              command: 'npx skills add acme/cool-skill',
+              notes: '# Fetched README',
+            },
+          },
+        }),
+      );
+      expect(res.redirect).toHaveBeenCalledWith('/items/skill-repo-new');
+      global.fetch = originalFetch;
     });
 
     it('should create Skill item with doc_markdown in installActions.claude_code.notes', async () => {

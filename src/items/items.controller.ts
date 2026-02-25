@@ -20,6 +20,19 @@ import { LoginGuard, ApiAuthGuard } from '../auth/authenticated.guard';
 const ADMIN_EMAIL = 'sonar@zigbang.com';
 const DOC_TYPES = new Set(['Skill', 'Prompt']);
 
+async function fetchReadme(repo: string): Promise<string> {
+  for (const branch of ['main', 'master']) {
+    const url = `https://raw.githubusercontent.com/${repo}/${branch}/README.md`;
+    try {
+      const res = await fetch(url);
+      if (res.ok) return await res.text();
+    } catch {
+      // try next branch
+    }
+  }
+  return '';
+}
+
 @Controller()
 export class ItemsController {
   constructor(
@@ -42,9 +55,17 @@ export class ItemsController {
     body: Record<string, any>,
     type: string,
   ): InstallActions {
-    // Skill/Prompt: single markdown doc stored in claude_code.notes
+    // Skill/Prompt: repo mode or manual markdown
     if (DOC_TYPES.has(type)) {
+      const repo = (body.skill_repo || '').trim();
       const md = body.doc_markdown || '';
+      if (repo) {
+        const action: InstallActions = {
+          claude_code: { command: `npx skills add ${repo}` },
+        };
+        if (md) action.claude_code!.notes = md;
+        return action;
+      }
       if (!md) return {};
       return { claude_code: { notes: md } };
     }
@@ -161,6 +182,9 @@ export class ItemsController {
       (item.installActions.claude_code || item.installActions.cursor);
     const canEdit = this.canUserEdit(user, item);
     const docMarkdown = isDocType ? this.getDocMarkdown(item) : '';
+    const skillInstallCommand = isDocType
+      ? item.installActions?.claude_code?.command || ''
+      : '';
     return res.render('items/detail', {
       title: item.name,
       item,
@@ -169,6 +193,7 @@ export class ItemsController {
       canEdit,
       isDocType,
       docMarkdown,
+      skillInstallCommand,
     });
   }
 
@@ -233,11 +258,17 @@ export class ItemsController {
       });
 
     const docMarkdown = this.getDocMarkdown(item);
+    // Detect repo mode: command starts with 'npx skills add '
+    const cmd = item.installActions?.claude_code?.command || '';
+    const skillRepo = cmd.startsWith('npx skills add ')
+      ? cmd.slice('npx skills add '.length).trim()
+      : '';
     return res.render('items/edit', {
       title: `Edit ${item.name}`,
       item,
       tagGroups,
       docMarkdown,
+      skillRepo,
     });
   }
 
@@ -262,6 +293,17 @@ export class ItemsController {
       body.doc_markdown = file.buffer.toString('utf-8');
     }
 
+    // Skill repo mode: fetch README from GitHub
+    const skillRepo = (body.skill_repo || '').trim();
+    if (skillRepo && DOC_TYPES.has(type) && !body.doc_markdown) {
+      body.doc_markdown = await fetchReadme(skillRepo);
+    }
+
+    // Auto-fill githubUrl from skill_repo if not already set
+    const githubUrl =
+      body.githubUrl ||
+      (skillRepo ? `https://github.com/${skillRepo}` : '');
+
     const tags = await this.validateTags(body.tags);
 
     const item = await this.itemsService.createItem({
@@ -271,7 +313,7 @@ export class ItemsController {
       detailDescription: detailDesc,
       tags,
       installActions: this.parseInstallActions(body, type),
-      githubUrl: body.githubUrl || '',
+      githubUrl,
       icon: body.icon || '',
       authorId: user?.id || '',
       authorName: user?.name || 'Anonymous',
@@ -315,6 +357,16 @@ export class ItemsController {
       body.doc_markdown = file.buffer.toString('utf-8');
     }
 
+    // Skill repo mode: fetch README from GitHub
+    const skillRepoU = (body.skill_repo || '').trim();
+    if (skillRepoU && DOC_TYPES.has(type) && !body.doc_markdown) {
+      body.doc_markdown = await fetchReadme(skillRepoU);
+    }
+
+    const githubUrlU =
+      body.githubUrl ||
+      (skillRepoU ? `https://github.com/${skillRepoU}` : '');
+
     const tags = await this.validateTags(body.tags);
 
     const item = await this.itemsService.updateItem(id, {
@@ -324,7 +376,7 @@ export class ItemsController {
       detailDescription: detailDesc,
       tags,
       installActions: this.parseInstallActions(body, type),
-      githubUrl: body.githubUrl || '',
+      githubUrl: githubUrlU,
       icon: body.icon || '',
     });
 

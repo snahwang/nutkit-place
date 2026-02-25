@@ -706,6 +706,9 @@
   .uppercase {
     text-transform: uppercase;
   }
+  .accent-orange-500 {
+    accent-color: var(--color-orange-500);
+  }
   .shadow-\[0_0_0_1px_rgba\(255\,255\,255\,0\.06\)\,0_20px_50px_rgba\(0\,0\,0\,0\.45\)\] {
     --tw-shadow: 0 0 0 1px var(--tw-shadow-color, rgba(255,255,255,0.06)), 0 20px 50px var(--tw-shadow-color, rgba(0,0,0,0.45));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
