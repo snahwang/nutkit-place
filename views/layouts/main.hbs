@@ -43,7 +43,11 @@
           <span class="text-xs text-slate-500">{{user.name}}</span>
           <a href="/auth/logout" class="text-sm font-semibold px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-200 hover:border-orange-500/50">logout</a>
         {{else}}
-          <a href="/auth/google" class="text-sm font-semibold px-3 py-1.5 rounded-lg bg-orange-500 text-black hover:bg-orange-400">login</a>
+          {{#unless authRequired}}
+            <a href="/items/new" class="text-sm text-slate-300 hover:text-white">register</a>
+          {{else}}
+            <a href="/auth/google" class="text-sm font-semibold px-3 py-1.5 rounded-lg bg-orange-500 text-black hover:bg-orange-400">login</a>
+          {{/unless}}
         {{/if}}
       </div>
     </div>

@@ -83,9 +83,7 @@ async function bootstrap() {
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     res.locals.authRequired = authRequired;
-    res.locals.user =
-      (req.user as any) ||
-      (!authRequired ? { id: 'anon', name: 'Anonymous', email: 'anon@local' } : null);
+    res.locals.user = req.user || null;
     next();
   });
 
