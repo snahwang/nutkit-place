@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { ItemsController } from './items.controller';
 import { ItemsService, ItemRecord } from './items.service';
 import { TagsService } from '../tags/tags.service';
@@ -77,6 +78,7 @@ describe('ItemsController', () => {
       providers: [
         { provide: ItemsService, useValue: mockItemsService },
         { provide: TagsService, useValue: mockTagsService },
+        { provide: ConfigService, useValue: { get: () => 'true' } },
       ],
     }).compile();
 
