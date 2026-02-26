@@ -77,9 +77,15 @@ async function bootstrap() {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Make user available in all templates via res.locals
+  // Make user + authRequired available in all templates via res.locals
+  const authRequiredEnv = String(process.env.AUTH_REQUIRED ?? 'true').toLowerCase();
+  const authRequired = !(authRequiredEnv === 'false' || authRequiredEnv === '0');
+
   app.use((req: Request, res: Response, next: NextFunction) => {
-    res.locals.user = req.user || null;
+    res.locals.authRequired = authRequired;
+    res.locals.user =
+      (req.user as any) ||
+      (!authRequired ? { id: 'anon', name: 'Anonymous', email: 'anon@local' } : null);
     next();
   });
 
