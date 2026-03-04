@@ -1,18 +1,20 @@
 services:
-  dynamodb-local:
-    image: amazon/dynamodb-local:latest
-    container_name: zarketplaces-dynamodb
-    user: root
+  postgres:
+    image: postgres:16-alpine
+    container_name: zarketplaces-postgres
     ports:
-      - "8000:8000"
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: zarketplace
+      POSTGRES_PASSWORD: zarketplace
+      POSTGRES_DB: zarketplace
     volumes:
-      - dynamodb-data:/home/dynamodblocal/data
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/ | grep -qE '(200|400)'"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      test: ["CMD-SHELL", "pg_isready -U zarketplace"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   app:
     build:
@@ -24,28 +26,27 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
-      - DYNAMODB_REGION=ap-northeast-2
-      - DYNAMODB_TABLE_NAME=ZarketPlaces
-      # Dummy AWS creds for DynamoDB Local (requires signed requests)
-      - AWS_ACCESS_KEY_ID=local
-      - AWS_SECRET_ACCESS_KEY=local
-      - AWS_DEFAULT_REGION=ap-northeast-2
-      - AWS_EC2_METADATA_DISABLED=true
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=zarketplace
+      - DB_PASSWORD=zarketplace
+      - DB_DATABASE=zarketplace
+      - DB_SYNC=true
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-http://192.168.50.11:3000/auth/google/callback}
       - GOOGLE_ALLOWED_DOMAIN=${GOOGLE_ALLOWED_DOMAIN:-zigbang.com}
       - SESSION_SECRET=${SESSION_SECRET:-local-dev-secret}
       - APP_URL=${APP_URL:-http://192.168.50.11:3000}
+      - AUTH_REQUIRED=${AUTH_REQUIRED:-false}
       - PORT=3000
     volumes:
       - .:/app
       - /app/node_modules
     depends_on:
-      dynamodb-local:
+      postgres:
         condition: service_healthy
     command: npm run start:dev
 
 volumes:
-  dynamodb-data:
+  pgdata:

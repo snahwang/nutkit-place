@@ -4,16 +4,16 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { DynamoDbService } from '../dynamodb/dynamodb.service';
+import { DataSource } from 'typeorm';
 
 @Controller('health')
 export class HealthController {
-  constructor(private readonly dynamoDbService: DynamoDbService) {}
+  constructor(private readonly dataSource: DataSource) {}
 
   @Get()
   async check() {
     try {
-      await this.dynamoDbService.describeTable();
+      await this.dataSource.query('SELECT 1');
       return {
         status: 'ok',
         db: 'connected',

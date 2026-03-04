@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { DynamoDbService } from '../dynamodb/dynamodb.service';
-import { ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TagGroup as TagGroupEntity } from '../entities/tag-group.entity';
 
 export interface TagItem {
   tagId: string;
@@ -20,46 +21,27 @@ const HIDDEN_TAGS: Set<string> = new Set(['windsurf', 'copilot']);
 export class TagsService {
   private cache: TagGroup[] | null = null;
 
-  constructor(private readonly dynamoDbService: DynamoDbService) {}
+  constructor(
+    @InjectRepository(TagGroupEntity)
+    private readonly tagGroupRepo: Repository<TagGroupEntity>,
+  ) {}
 
   async getTagGroups(): Promise<TagGroup[]> {
     if (this.cache) return this.cache;
 
-    const docClient = this.dynamoDbService.getDocClient();
-    const tableName = this.dynamoDbService.getTableName();
+    const entities = await this.tagGroupRepo.find({
+      relations: ['tags'],
+      order: { groupId: 'ASC' },
+    });
 
-    const result = await docClient.send(
-      new ScanCommand({
-        TableName: tableName,
-        FilterExpression: 'begins_with(PK, :prefix)',
-        ExpressionAttributeValues: { ':prefix': 'TAG_GROUP#' },
-      }),
-    );
-
-    const groupMap = new Map<string, TagGroup>();
-
-    for (const item of result.Items ?? []) {
-      const groupId = item.groupId as string;
-      if (!groupMap.has(groupId)) {
-        groupMap.set(groupId, {
-          groupId,
-          groupName: item.groupName as string,
-          tags: [],
-        });
-      }
-      groupMap.get(groupId)!.tags.push({
-        tagId: item.tagId as string,
-        label: item.label as string,
-        order: Number(item.order ?? 0),
-      });
-    }
-
-    const groups = Array.from(groupMap.values());
-    for (const g of groups) {
-      g.tags = g.tags.filter((t) => !HIDDEN_TAGS.has(t.tagId));
-      g.tags.sort((a, b) => a.order - b.order);
-    }
-    groups.sort((a, b) => a.groupId.localeCompare(b.groupId));
+    const groups: TagGroup[] = entities.map((g) => ({
+      groupId: g.groupId,
+      groupName: g.groupName,
+      tags: (g.tags || [])
+        .filter((t) => !HIDDEN_TAGS.has(t.tagId))
+        .sort((a, b) => a.order - b.order)
+        .map((t) => ({ tagId: t.tagId, label: t.label, order: t.order })),
+    }));
 
     this.cache = groups;
     return groups;
